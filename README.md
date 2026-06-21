@@ -38,7 +38,7 @@ pkg install git nodejs -y
 ### 4. Menginstal BTG Auto Secara Global
 Instal aplikasi ini langsung dari repositori GitHub secara global agar perintah eksekusi dapat diakses dari direktori mana pun di dalam sistem:
 ```bash
-npm install -g [https://github.com/brotherofijul/btgauto.git](https://github.com/brotherofijul/btgauto.git)
+npm install -g https://github.com/brotherofijul/btgauto.git
 
 ```
 
@@ -50,7 +50,7 @@ Aplikasi ini membutuhkan Bearer Token akun Anda untuk dapat melakukan interaksi 
  3. Pilih menu **Skrip**, lalu tekan tombol tambah (**+**).
  4. Pilih opsi **Impor dari URL** dan masukkan tautan skrip berikut:
 ```text
-   [https://github.com/brotherofijul/btgauto/raw/main/bearer-token-extractor.user.js](https://github.com/brotherofijul/btgauto/raw/main/bearer-token-extractor.user.js)
+https://github.com/brotherofijul/btgauto/raw/main/bearer-token-extractor.user.js
 
 ```
 
@@ -99,4 +99,3 @@ Aplikasi ini bekerja menggunakan sistem siklus berkelanjutan (looping) dengan ka
  3. **Interval Acak (Anti-Bot Jitter)**: Untuk meminimalkan risiko deteksi bot oleh sistem keamanan server, aplikasi secara otomatis menambahkan waktu jeda acak (jitter) di luar waktu tunggu bawaan game sebelum mengeksekusi siklus berikutnya.
  4. **Manajemen Kesalahan (Error Handling)**: Jika terjadi gangguan jaringan atau kegagalan respons dari server, aplikasi tidak akan berhenti secara paksa, melainkan memasuki mode penundaan aman sebelum mencoba kembali secara otomatis.
  5. **Penghentian Aplikasi**: Eksekusi program dapat dihentikan secara aman kapan saja oleh pengguna dengan menekan kombinasi tombol Ctrl + C pada terminal.
-```
