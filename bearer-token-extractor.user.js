@@ -7,7 +7,8 @@
 // @match        *diplomacia.com.tr/*
 // @run-at       document-end
 // @grant        none
-// @downloaurl
+// @@downloadURL https://github.com/brotherofijul/btgauto/raw/main/bearer-token-extractor.user.js
+// updateURL     https://github.com/brotherofijul/btgauto/raw/main/bearer-token-extractor.user.js
 // ==/UserScript==
 
 (function () {

@@ -1,746 +1,1449 @@
 <!doctype html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BOIAuto</title>
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <style type="text/tailwindcss">
-    @theme {
-      --font-display: 'Space Grotesk', sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
-      --color-base-950: #0a0e0d;
-      --color-base-900: #111916;
-      --color-base-800: #1a2420;
-      --color-base-700: #243430;
-      --color-base-600: #2e443d;
-      --color-base-400: #5a7a6e;
-      --color-base-200: #a3c4b5;
-      --color-base-100: #d0e8dc;
-      --color-s1: #00e88f;
-      --color-s1-dim: #00c278;
-      --color-s2: #00c8ff;
-      --color-s2-dim: #00a8d6;
-      --color-warn: #f5a623;
-      --color-danger: #ff4d6a;
-    }
-  </style>
-  <style>
-    *,*::before,*::after{box-sizing:border-box}
-    body{font-family:'Space Grotesk',sans-serif;background:#0a0e0d;margin:0}
-    .log-scroll::-webkit-scrollbar{width:5px}
-    .log-scroll::-webkit-scrollbar-track{background:transparent}
-    .log-scroll::-webkit-scrollbar-thumb{background:#2e443d;border-radius:10px}
-
-    @keyframes pulse-ring{0%{transform:scale(1);opacity:.6}100%{transform:scale(2.4);opacity:0}}
-    .pulse-ring{animation:pulse-ring 1.4s cubic-bezier(.215,.61,.355,1) infinite}
-
-    @keyframes glow-1{0%,100%{border-color:rgba(0,232,143,.18)}50%{border-color:rgba(0,232,143,.45)}}
-    @keyframes glow-2{0%,100%{border-color:rgba(0,200,255,.18)}50%{border-color:rgba(0,200,255,.45)}}
-    .glow-s1{animation:glow-1 2s ease-in-out infinite}
-    .glow-s2{animation:glow-2 2s ease-in-out infinite}
-
-    @keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
-    .text-shimmer{
-      background:linear-gradient(90deg,#00e88f 0%,#a0ffd8 40%,#00e88f 80%);
-      background-size:200% auto;
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-      background-clip:text;animation:shimmer 4s linear infinite;
-    }
-
-    .bg-grid{
-      background-image:
-        linear-gradient(rgba(0,232,143,.02) 1px,transparent 1px),
-        linear-gradient(90deg,rgba(0,232,143,.02) 1px,transparent 1px);
-      background-size:44px 44px;
-    }
-    .bg-glow::before,.bg-glow::after{
-      content:'';position:fixed;pointer-events:none;z-index:0;border-radius:50%;
-    }
-    .bg-glow::before{
-      top:-18%;right:-8%;width:520px;height:520px;
-      background:radial-gradient(circle,rgba(0,232,143,.05) 0%,transparent 70%);
-    }
-    .bg-glow::after{
-      bottom:-14%;left:-8%;width:440px;height:440px;
-      background:radial-gradient(circle,rgba(0,200,255,.035) 0%,transparent 70%);
-    }
-
-    @keyframes float-up{
-      0%{transform:translateY(100vh) scale(0);opacity:0}
-      10%{opacity:.6}90%{opacity:.6}
-      100%{transform:translateY(-10vh) scale(1);opacity:0}
-    }
-    .particle{
-      position:fixed;border-radius:50%;pointer-events:none;z-index:0;opacity:0;
-      animation:float-up linear infinite;
-    }
-
-    input:focus,select:focus{outline:none;box-shadow:0 0 0 2px #00e88f,0 0 10px rgba(0,232,143,.1)}
-    input.s2f:focus{box-shadow:0 0 0 2px #00c8ff,0 0 10px rgba(0,200,255,.1)}
-    button:disabled{opacity:.32;cursor:not-allowed}
-    [x-cloak]{display:none!important}
-
-    @keyframes count-pulse{0%,100%{opacity:1}50%{opacity:.55}}
-    .count-pulse{animation:count-pulse 1s ease-in-out infinite}
-  </style>
-</head>
-<body class="min-h-screen text-base-100 bg-grid bg-glow overflow-x-hidden">
-
-  <div id="particles" class="fixed inset-0 pointer-events-none z-0" aria-hidden="true"></div>
-
-  <div x-data="boiauto()" x-init="init()" class="relative z-10 min-h-screen flex flex-col">
-
-    <!-- ═══ HEADER ═══ -->
-    <header class="border-b border-base-800/50 backdrop-blur-sm bg-base-950/70 sticky top-0 z-30">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
-        <div class="flex items-center gap-2.5 flex-shrink-0">
-          <div class="w-9 h-9 rounded-lg bg-s1/10 border border-s1/20 flex items-center justify-center">
-            <svg class="w-4 h-4 text-s1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
-            </svg>
-          </div>
-          <div>
-            <h1 class="text-base font-bold tracking-tight text-shimmer leading-tight">BOIAuto</h1>
-            <p class="text-[10px] text-base-400 font-mono tracking-wider uppercase leading-tight">Dual Slot</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-2 sm:gap-3">
-          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-mono"
-               :class="slots[1].running?'border-s1/30 bg-s1/10 text-s1':'border-base-700/40 bg-base-800/40 text-base-500'">
-            <span class="relative flex items-center justify-center">
-              <span x-show="slots[1].running" class="absolute w-2 h-2 rounded-full bg-s1 pulse-ring"></span>
-              <span class="w-1.5 h-1.5 rounded-full" :class="slots[1].running?'bg-s1':'bg-base-600'"></span>
-            </span>
-            S1
-          </div>
-          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-mono"
-               :class="slots[2].running?'border-s2/30 bg-s2/10 text-s2':'border-base-700/40 bg-base-800/40 text-base-500'">
-            <span class="relative flex items-center justify-center">
-              <span x-show="slots[2].running" class="absolute w-2 h-2 rounded-full bg-s2 pulse-ring"></span>
-              <span class="w-1.5 h-1.5 rounded-full" :class="slots[2].running?'bg-s2':'bg-base-600'"></span>
-            </span>
-            S2
-          </div>
-          <div class="hidden sm:flex items-center gap-1.5 text-[11px] font-mono"
-               :class="wsOk?'text-base-400':'text-danger'">
-            <span class="w-1.5 h-1.5 rounded-full" :class="wsOk?'bg-base-400':'bg-danger animate-pulse'"></span>
-            <span x-text="wsOk?'WS':'RECONN'"></span>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <!-- ═══ MODE BAR ═══ -->
-    <div class="border-b border-base-800/35 bg-base-900/35 backdrop-blur-sm">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 py-2 flex items-center gap-3">
-        <span class="text-[11px] text-base-500 uppercase tracking-widest font-semibold flex-shrink-0">Mode</span>
-        <div class="flex rounded-lg border border-base-700/40 overflow-hidden">
-          <button @click="mode='diplomacia'" type="button"
-                  class="px-3.5 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5"
-                  :class="mode==='diplomacia'?'bg-s1/10 text-s1':'text-base-500 hover:text-base-300'">
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-            Diplomacia
-          </button>
-          <button disabled type="button"
-                  class="px-3.5 py-1.5 text-xs font-medium text-base-600 border-l border-base-700/40 cursor-not-allowed flex items-center gap-1.5">
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-            Rival Regions
-            <span class="text-[9px] bg-base-700/80 text-base-400 px-1.5 py-px rounded-full font-mono leading-none">Soon</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ MAIN ═══ -->
-    <main class="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-5 sm:py-7">
-      <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-12 gap-5">
-
-        <!-- ── SLOT 1 ── -->
-        <section class="xl:col-span-3 xl:flex xl:flex-col">
-          <div class="rounded-2xl border overflow-hidden transition-all duration-500 xl:flex-1 xl:flex xl:flex-col"
-               :class="slots[1].running?'border-s1/30 glow-s1 bg-base-900/80':'border-base-800/50 bg-base-900/45'">
-            <div class="h-1 flex-shrink-0" :class="slots[1].running?'bg-s1/60':'bg-base-700/40'"></div>
-            <div class="p-4 sm:p-5 space-y-3 xl:flex-1 xl:flex xl:flex-col">
-              <div class="flex items-center justify-between flex-shrink-0">
-                <span class="text-xs font-mono font-bold text-s1 bg-s1/10 px-2 py-0.5 rounded">SLOT 1</span>
-                <span class="text-[11px] font-mono" :class="slots[1].running?'text-s1':'text-base-600'" x-text="slots[1].running?'AKTIF':'IDLE'"></span>
-              </div>
-
-              <!-- Token -->
-              <div class="flex-shrink-0">
-                <label class="block text-[11px] text-base-400 mb-1">Authorization Token</label>
-                <div class="relative">
-                  <input x-model="slots[1].token" :type="slots[1].showTk?'text':'password'" :disabled="slots[1].running"
-                         placeholder="Bearer token..."
-                         class="w-full rounded-lg bg-base-800 border border-base-700 text-sm px-3 py-2 pr-9 font-mono placeholder:text-base-600 transition-colors" />
-                  <button @click="slots[1].showTk=!slots[1].showTk" type="button"
-                          class="absolute right-2 top-1/2 -translate-y-1/2 text-base-500 hover:text-base-200 transition-colors p-0.5">
-                    <svg x-show="!slots[1].showTk" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                    <svg x-show="slots[1].showTk" x-cloak class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Skill (full width) -->
-              <div class="flex-shrink-0">
-                <label class="block text-[11px] text-base-400 mb-1">Skill</label>
-                <div class="grid grid-cols-3 gap-1.5">
-                  <template x-for="s in skills" :key="'a1-'+s.value">
-                    <button @click="slots[1].skill=s.value" :disabled="slots[1].running" type="button"
-                            class="rounded-lg text-[11px] font-medium py-2 border transition-all text-center leading-tight"
-                            :class="slots[1].skill===s.value?'border-s1/50 bg-s1/10 text-s1':'border-base-700 bg-base-800 text-base-500 hover:text-base-300'">
-                      <span x-text="s.label"></span>
-                    </button>
-                  </template>
-                </div>
-              </div>
-
-              <!-- Pay -->
-              <div class="flex-shrink-0">
-                <label class="block text-[11px] text-base-400 mb-1">Bayar</label>
-                <div class="grid grid-cols-2 gap-1.5">
-                  <button @click="slots[1].pay='1'" :disabled="slots[1].running" type="button"
-                          class="rounded-lg text-[11px] font-medium py-2 border transition-all flex items-center justify-center gap-1.5"
-                          :class="slots[1].pay==='1'?'border-s1/50 bg-s1/10 text-s1':'border-base-700 bg-base-800 text-base-500 hover:text-base-300'">
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M15 9.5a3 3 0 0 0-3-2.5H10a2.5 2.5 0 0 0 0 5h4a2.5 2.5 0 0 1 0 5h-2a3 3 0 0 1-3-2.5"/></svg>
-                    Uang
-                  </button>
-                  <button @click="slots[1].pay='2'" :disabled="slots[1].running" type="button"
-                          class="rounded-lg text-[11px] font-medium py-2 border transition-all flex items-center justify-center gap-1.5"
-                          :class="slots[1].pay==='2'?'border-s1/50 bg-s1/10 text-s1':'border-base-700 bg-base-800 text-base-500 hover:text-base-300'">
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9z"/><path d="M2 9h20"/><path d="M10 3l-4 6 6 13"/><path d="M14 3l4 6-6 13"/></svg>
-                    Diamond
-                  </button>
-                </div>
-              </div>
-
-              <!-- Tombol -->
-              <div class="flex gap-2 flex-shrink-0">
-                <button @click="startSlot(1)" :disabled="slots[1].running||!slots[1].token.trim()" type="button"
-                        class="flex-1 rounded-lg font-semibold text-xs py-2.5 flex items-center justify-center gap-1.5 transition-all"
-                        :class="slots[1].running||!slots[1].token.trim()?'bg-base-700 text-base-500':'bg-s1 text-base-950 hover:bg-s1-dim active:scale-[.97]'">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg> Mulai
-                </button>
-                <button @click="stopSlot(1)" :disabled="!slots[1].running" type="button"
-                        class="flex-1 rounded-lg font-semibold text-xs py-2.5 flex items-center justify-center gap-1.5 border transition-all"
-                        :class="!slots[1].running?'border-base-700 bg-base-800 text-base-600':'border-danger/40 bg-danger/10 text-danger hover:bg-danger/15 active:scale-[.97]'">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg> Stop
-                </button>
-              </div>
-
-              <!-- Error -->
-              <div x-show="slots[1].error" x-transition.opacity.duration.200ms
-                   class="rounded-lg bg-danger/10 border border-danger/20 px-3 py-2 text-[11px] text-danger font-mono leading-snug flex-shrink-0"
-                   x-text="slots[1].error"></div>
-
-              <!-- Stats: ditarik ke bawah pada xl -->
-              <div class="xl:mt-auto flex-shrink-0 pt-1">
-                <div class="grid grid-cols-3 gap-2">
-                  <div class="rounded-lg bg-base-800/50 border border-base-700/30 p-2.5 text-center">
-                    <p class="text-[9px] text-base-500 uppercase tracking-widest mb-1">Current</p>
-                    <p class="text-2xl font-bold font-mono text-base-100" x-text="slots[1].currentLevel??'—'">—</p>
-                  </div>
-                  <div class="rounded-lg bg-base-800/50 border border-base-700/30 p-2.5 text-center">
-                    <p class="text-[9px] text-base-500 uppercase tracking-widest mb-1">Next</p>
-                    <p class="text-2xl font-bold font-mono text-s1" x-text="slots[1].targetLevel??'—'">—</p>
-                  </div>
-                  <div class="rounded-lg bg-base-800/50 border border-base-700/30 p-2.5 text-center">
-                    <p class="text-[9px] text-base-500 uppercase tracking-widest mb-1">Time</p>
-                    <p class="text-2xl font-bold font-mono leading-none"
-                       :class="timeClass(1)"
-                       :style="timeLow(1)?'animation:count-pulse 1s ease-in-out infinite':''"
-                       x-text="slots[1].time">—</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- ── SLOT 2 ── -->
-        <section class="xl:col-span-3 xl:flex xl:flex-col">
-          <div class="rounded-2xl border overflow-hidden transition-all duration-500 xl:flex-1 xl:flex xl:flex-col"
-               :class="slots[2].running?'border-s2/30 glow-s2 bg-base-900/80':'border-base-800/50 bg-base-900/45'">
-            <div class="h-1 flex-shrink-0" :class="slots[2].running?'bg-s2/60':'bg-base-700/40'"></div>
-            <div class="p-4 sm:p-5 space-y-3 xl:flex-1 xl:flex xl:flex-col">
-              <div class="flex items-center justify-between flex-shrink-0">
-                <span class="text-xs font-mono font-bold text-s2 bg-s2/10 px-2 py-0.5 rounded">SLOT 2</span>
-                <span class="text-[11px] font-mono" :class="slots[2].running?'text-s2':'text-base-600'" x-text="slots[2].running?'AKTIF':'IDLE'"></span>
-              </div>
-
-              <div class="flex-shrink-0">
-                <label class="block text-[11px] text-base-400 mb-1">Authorization Token</label>
-                <div class="relative">
-                  <input x-model="slots[2].token" :type="slots[2].showTk?'text':'password'" :disabled="slots[2].running"
-                         placeholder="Bearer token..."
-                         class="w-full rounded-lg bg-base-800 border border-base-700 text-sm px-3 py-2 pr-9 font-mono placeholder:text-base-600 transition-colors s2f" />
-                  <button @click="slots[2].showTk=!slots[2].showTk" type="button"
-                          class="absolute right-2 top-1/2 -translate-y-1/2 text-base-500 hover:text-base-200 transition-colors p-0.5">
-                    <svg x-show="!slots[2].showTk" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                    <svg x-show="slots[2].showTk" x-cloak class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                  </button>
-                </div>
-              </div>
-
-              <div class="flex-shrink-0">
-                <label class="block text-[11px] text-base-400 mb-1">Skill</label>
-                <div class="grid grid-cols-3 gap-1.5">
-                  <template x-for="s in skills" :key="'a2-'+s.value">
-                    <button @click="slots[2].skill=s.value" :disabled="slots[2].running" type="button"
-                            class="rounded-lg text-[11px] font-medium py-2 border transition-all text-center leading-tight"
-                            :class="slots[2].skill===s.value?'border-s2/50 bg-s2/10 text-s2':'border-base-700 bg-base-800 text-base-500 hover:text-base-300'">
-                      <span x-text="s.label"></span>
-                    </button>
-                  </template>
-                </div>
-              </div>
-
-              <div class="flex-shrink-0">
-                <label class="block text-[11px] text-base-400 mb-1">Bayar</label>
-                <div class="grid grid-cols-2 gap-1.5">
-                  <button @click="slots[2].pay='1'" :disabled="slots[2].running" type="button"
-                          class="rounded-lg text-[11px] font-medium py-2 border transition-all flex items-center justify-center gap-1.5"
-                          :class="slots[2].pay==='1'?'border-s2/50 bg-s2/10 text-s2':'border-base-700 bg-base-800 text-base-500 hover:text-base-300'">
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M15 9.5a3 3 0 0 0-3-2.5H10a2.5 2.5 0 0 0 0 5h4a2.5 2.5 0 0 1 0 5h-2a3 3 0 0 1-3-2.5"/></svg>
-                    Uang
-                  </button>
-                  <button @click="slots[2].pay='2'" :disabled="slots[2].running" type="button"
-                          class="rounded-lg text-[11px] font-medium py-2 border transition-all flex items-center justify-center gap-1.5"
-                          :class="slots[2].pay==='2'?'border-s2/50 bg-s2/10 text-s2':'border-base-700 bg-base-800 text-base-500 hover:text-base-300'">
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9z"/><path d="M2 9h20"/><path d="M10 3l-4 6 6 13"/><path d="M14 3l4 6-6 13"/></svg>
-                    Diamond
-                  </button>
-                </div>
-              </div>
-
-              <div class="flex gap-2 flex-shrink-0">
-                <button @click="startSlot(2)" :disabled="slots[2].running||!slots[2].token.trim()" type="button"
-                        class="flex-1 rounded-lg font-semibold text-xs py-2.5 flex items-center justify-center gap-1.5 transition-all"
-                        :class="slots[2].running||!slots[2].token.trim()?'bg-base-700 text-base-500':'bg-s2 text-base-950 hover:bg-s2-dim active:scale-[.97]'">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg> Mulai
-                </button>
-                <button @click="stopSlot(2)" :disabled="!slots[2].running" type="button"
-                        class="flex-1 rounded-lg font-semibold text-xs py-2.5 flex items-center justify-center gap-1.5 border transition-all"
-                        :class="!slots[2].running?'border-base-700 bg-base-800 text-base-600':'border-danger/40 bg-danger/10 text-danger hover:bg-danger/15 active:scale-[.97]'">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg> Stop
-                </button>
-              </div>
-
-              <div x-show="slots[2].error" x-transition.opacity.duration.200ms
-                   class="rounded-lg bg-danger/10 border border-danger/20 px-3 py-2 text-[11px] text-danger font-mono leading-snug flex-shrink-0"
-                   x-text="slots[2].error"></div>
-
-              <div class="xl:mt-auto flex-shrink-0 pt-1">
-                <div class="grid grid-cols-3 gap-2">
-                  <div class="rounded-lg bg-base-800/50 border border-base-700/30 p-2.5 text-center">
-                    <p class="text-[9px] text-base-500 uppercase tracking-widest mb-1">Current</p>
-                    <p class="text-2xl font-bold font-mono text-base-100" x-text="slots[2].currentLevel??'—'">—</p>
-                  </div>
-                  <div class="rounded-lg bg-base-800/50 border border-base-700/30 p-2.5 text-center">
-                    <p class="text-[9px] text-base-500 uppercase tracking-widest mb-1">Next</p>
-                    <p class="text-2xl font-bold font-mono text-s2" x-text="slots[2].targetLevel??'—'">—</p>
-                  </div>
-                  <div class="rounded-lg bg-base-800/50 border border-base-700/30 p-2.5 text-center">
-                    <p class="text-[9px] text-base-500 uppercase tracking-widest mb-1">Time</p>
-                    <p class="text-2xl font-bold font-mono leading-none"
-                       :class="timeClass(2)"
-                       :style="timeLow(2)?'animation:count-pulse 1s ease-in-out infinite':''"
-                       x-text="slots[2].time">—</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- ── LOG VIEWER ── -->
-        <section class="lg:col-span-2 xl:col-span-6">
-          <div class="rounded-2xl border border-base-800/50 bg-base-900/45 overflow-hidden flex flex-col h-[420px] lg:h-[380px] xl:h-[calc(100vh-9.5rem)]">
-            <!-- Header -->
-            <div class="px-4 py-2.5 border-b border-base-800/50 flex items-center justify-between bg-base-900/70 backdrop-blur-sm flex-shrink-0 gap-2">
-              <div class="flex items-center gap-2 flex-shrink-0">
-                <div class="flex gap-1.5">
-                  <span class="w-2.5 h-2.5 rounded-full bg-danger/60"></span>
-                  <span class="w-2.5 h-2.5 rounded-full bg-warn/60"></span>
-                  <span class="w-2.5 h-2.5 rounded-full bg-s1/60"></span>
-                </div>
-                <span class="text-xs font-semibold text-base-200 uppercase tracking-widest hidden sm:inline">Log</span>
-              </div>
-              <div class="flex items-center gap-1.5 flex-wrap justify-end">
-                <div class="flex rounded-md border border-base-700/40 overflow-hidden text-[10px] font-mono">
-                  <button @click="fSlot='all'" type="button" class="px-2 py-0.5 transition-colors"
-                          :class="fSlot==='all'?'bg-base-700/60 text-base-100':'text-base-500 hover:text-base-300'">All</button>
-                  <button @click="fSlot='1'" type="button" class="px-2 py-0.5 transition-colors border-l border-base-700/40"
-                          :class="fSlot==='1'?'bg-s1/15 text-s1':'text-base-500 hover:text-base-300'">S1</button>
-                  <button @click="fSlot='2'" type="button" class="px-2 py-0.5 transition-colors border-l border-base-700/40"
-                          :class="fSlot==='2'?'bg-s2/15 text-s2':'text-base-500 hover:text-base-300'">S2</button>
-                </div>
-                <div class="flex rounded-md border border-base-700/40 overflow-hidden text-[10px] font-mono">
-                  <button @click="fType='all'" type="button" class="px-2 py-0.5 transition-colors"
-                          :class="fType==='all'?'bg-base-700/60 text-base-100':'text-base-500 hover:text-base-300'">All</button>
-                  <button @click="fType='success'" type="button" class="px-2 py-0.5 transition-colors border-l border-base-700/40"
-                          :class="fType==='success'?'bg-s1/15 text-s1':'text-base-500 hover:text-base-300'">OK</button>
-                  <button @click="fType='error'" type="button" class="px-2 py-0.5 transition-colors border-l border-base-700/40"
-                          :class="fType==='error'?'bg-danger/15 text-danger':'text-base-500 hover:text-base-300'">Err</button>
-                </div>
-                <button @click="clearLogs()" type="button" title="Bersihkan"
-                        class="text-base-500 hover:text-base-200 transition-colors p-0.5 rounded">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                </button>
-              </div>
-            </div>
-
-            <!-- Body -->
-            <div class="flex-1 overflow-y-auto log-scroll px-3 py-2 space-y-0.5 font-mono text-[12px] leading-relaxed" x-ref="logBox">
-              <template x-for="log in filteredLogs" :key="log._id">
-                <div class="flex items-start gap-2 py-0.5 px-1.5 rounded hover:bg-base-800/30 transition-colors"
-                     x-transition:enter="transition ease-out duration-150"
-                     x-transition:enter-start="opacity-0 -translate-y-0.5"
-                     x-transition:enter-end="opacity-100 translate-y-0">
-                  <span class="text-base-600 flex-shrink-0 text-[10px] pt-px select-none w-[58px]" x-text="log.time"></span>
-                  <span class="flex-shrink-0 text-[9px] font-bold px-1 py-px rounded mt-px"
-                        :class="log.slot===1?'bg-s1/15 text-s1':'bg-s2/15 text-s2'"
-                        x-text="'S'+log.slot"></span>
-                  <span class="flex-shrink-0 mt-px" x-html="logIcon(log.logType)"></span>
-                  <span class="break-all"
-                        :class="logColor(log)"
-                        x-text="log.text"></span>
-                </div>
-              </template>
-              <div x-show="logs.length===0" class="flex flex-col items-center justify-center h-full text-base-600 select-none">
-                <svg class="w-10 h-10 mb-2.5 opacity-20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                <p class="text-xs">Belum ada aktivitas</p>
-              </div>
-            </div>
-
-            <!-- Footer -->
-            <div class="px-4 py-1.5 border-t border-base-800/50 bg-base-900/70 flex items-center justify-between text-[10px] font-mono text-base-600 flex-shrink-0">
-              <span x-text="filteredLogs.length+' entri'"></span>
-              <span x-show="slots[1].running||slots[2].running" class="flex items-center gap-1.5 text-base-400/50">
-                <span class="w-1 h-1 rounded-full bg-s1 animate-pulse" x-show="slots[1].running"></span>
-                <span class="w-1 h-1 rounded-full bg-s2 animate-pulse" x-show="slots[2].running"></span>
-                live
-              </span>
-            </div>
-          </div>
-        </section>
-
-      </div>
-    </main>
-
-    <!-- ═══ FOOTER ═══ -->
-    <footer class="border-t border-base-800/30 py-3 mt-auto">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between text-[10px] text-base-600 font-mono">
-        <span>BOIAuto v2.1.0</span>
-        <span x-text="mode==='diplomacia'?'Diplomacia · 2 Slot · WebSocket':'—'"></span>
-      </div>
-    </footer>
-  </div>
-
-  <script>
-    function boiauto() {
-      const LS_KEY = 'boiauto_cache';
-      const SKILL_UI = { kisla: 'Barak', savas_teknikleri: 'Teknik Perang', bilim_insani: 'Ilmuan' };
-      let _lid = 0;
-
-      function mkSlot() {
-        return {
-          running: false, showTk: false, error: '',
-          token: '', skill: '3', pay: '1',
-          currentLevel: null, targetLevel: null,
-          pendingAt: null, time: '—',
-          _cdIv: null,
-        };
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BOIAuto</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+    ></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style type="text/tailwindcss">
+      @theme {
+        --font-display: "Space Grotesk", sans-serif;
+        --font-mono: "JetBrains Mono", monospace;
+        --color-base-950: #0a0e0d;
+        --color-base-900: #111916;
+        --color-base-800: #1a2420;
+        --color-base-700: #243430;
+        --color-base-600: #2e443d;
+        --color-base-400: #5a7a6e;
+        --color-base-200: #a3c4b5;
+        --color-base-100: #d0e8dc;
+        --color-s1: #00e88f;
+        --color-s1-dim: #00c278;
+        --color-s2: #00c8ff;
+        --color-s2-dim: #00a8d6;
+        --color-warn: #f5a623;
+        --color-danger: #ff4d6a;
+      }
+    </style>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Space Grotesk", sans-serif;
+        background: #0a0e0d;
+        margin: 0;
+      }
+      .log-scroll::-webkit-scrollbar {
+        width: 5px;
+      }
+      .log-scroll::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .log-scroll::-webkit-scrollbar-thumb {
+        background: #2e443d;
+        border-radius: 10px;
       }
 
-      return {
-        mode: 'diplomacia',
-        ws: null, wsOk: false, wsRetry: 0,
-        slots: { 1: mkSlot(), 2: mkSlot() },
-        logs: [],
-        fSlot: 'all', fType: 'all',
+      @keyframes pulse-ring {
+        0% {
+          transform: scale(1);
+          opacity: 0.6;
+        }
+        100% {
+          transform: scale(2.4);
+          opacity: 0;
+        }
+      }
+      .pulse-ring {
+        animation: pulse-ring 1.4s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+      }
 
-        skills: [
-          { value: '1', label: 'Barak' },
-          { value: '2', label: 'Teknik Perang' },
-          { value: '3', label: 'Ilmuan' },
-        ],
+      @keyframes glow-1 {
+        0%,
+        100% {
+          border-color: rgba(0, 232, 143, 0.18);
+        }
+        50% {
+          border-color: rgba(0, 232, 143, 0.45);
+        }
+      }
+      @keyframes glow-2 {
+        0%,
+        100% {
+          border-color: rgba(0, 200, 255, 0.18);
+        }
+        50% {
+          border-color: rgba(0, 200, 255, 0.45);
+        }
+      }
+      .glow-s1 {
+        animation: glow-1 2s ease-in-out infinite;
+      }
+      .glow-s2 {
+        animation: glow-2 2s ease-in-out infinite;
+      }
 
-        /* ── Filtered logs ── */
-        get filteredLogs() {
-          return this.logs.filter(l => {
-            if (this.fSlot !== 'all' && l.slot !== Number(this.fSlot)) return false;
-            if (this.fType !== 'all' && l.logType !== this.fType) return false;
-            return true;
-          });
-        },
+      @keyframes shimmer {
+        0% {
+          background-position: -200% center;
+        }
+        100% {
+          background-position: 200% center;
+        }
+      }
+      .text-shimmer {
+        background: linear-gradient(
+          90deg,
+          #00e88f 0%,
+          #a0ffd8 40%,
+          #00e88f 80%
+        );
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: shimmer 4s linear infinite;
+      }
 
-        /* ── Warna log per entry ── */
-        logColor(l) {
-          if (l.logType === 'success') return l.slot === 1 ? 'text-s1' : 'text-s2';
-          if (l.logType === 'warn') return 'text-warn';
-          if (l.logType === 'error') return 'text-danger';
-          if (l.logType === 'stopped') return 'text-base-400';
-          return 'text-base-400';
-        },
+      .bg-grid {
+        background-image:
+          linear-gradient(rgba(0, 232, 143, 0.02) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 232, 143, 0.02) 1px, transparent 1px);
+        background-size: 44px 44px;
+      }
+      .bg-glow::before,
+      .bg-glow::after {
+        content: "";
+        position: fixed;
+        pointer-events: none;
+        z-index: 0;
+        border-radius: 50%;
+      }
+      .bg-glow::before {
+        top: -18%;
+        right: -8%;
+        width: 520px;
+        height: 520px;
+        background: radial-gradient(
+          circle,
+          rgba(0, 232, 143, 0.05) 0%,
+          transparent 70%
+        );
+      }
+      .bg-glow::after {
+        bottom: -14%;
+        left: -8%;
+        width: 440px;
+        height: 440px;
+        background: radial-gradient(
+          circle,
+          rgba(0, 200, 255, 0.035) 0%,
+          transparent 70%
+        );
+      }
 
-        /* ── Ikon tipe log ── */
-        logIcon(t) {
-          const m = {
-            success: '<svg class="w-3 h-3 text-s1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
-            warn:    '<svg class="w-3 h-3 text-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
-            error:   '<svg class="w-3 h-3 text-danger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
-            info:    '<svg class="w-3 h-3 text-base-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
-            stopped: '<svg class="w-3 h-3 text-base-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>',
+      @keyframes float-up {
+        0% {
+          transform: translateY(100vh) scale(0);
+          opacity: 0;
+        }
+        10% {
+          opacity: 0.6;
+        }
+        90% {
+          opacity: 0.6;
+        }
+        100% {
+          transform: translateY(-10vh) scale(1);
+          opacity: 0;
+        }
+      }
+      .particle {
+        position: fixed;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 0;
+        opacity: 0;
+        animation: float-up linear infinite;
+      }
+
+      input:focus,
+      select:focus {
+        outline: none;
+        box-shadow:
+          0 0 0 2px #00e88f,
+          0 0 10px rgba(0, 232, 143, 0.1);
+      }
+      input.s2f:focus {
+        box-shadow:
+          0 0 0 2px #00c8ff,
+          0 0 10px rgba(0, 200, 255, 0.1);
+      }
+      button:disabled {
+        opacity: 0.32;
+        cursor: not-allowed;
+      }
+      [x-cloak] {
+        display: none !important;
+      }
+
+      @keyframes count-pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.55;
+        }
+      }
+      .count-pulse {
+        animation: count-pulse 1s ease-in-out infinite;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen text-base-100 bg-grid bg-glow overflow-x-hidden">
+    <div
+      id="particles"
+      class="fixed inset-0 pointer-events-none z-0"
+      aria-hidden="true"
+    ></div>
+
+    <div
+      x-data="boiauto()"
+      x-init="init()"
+      class="relative z-10 min-h-screen flex flex-col"
+    >
+      <!-- ═══ HEADER ═══ -->
+      <header
+        class="border-b border-base-800/50 backdrop-blur-sm bg-base-950/70 sticky top-0 z-30"
+      >
+        <div
+          class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3"
+        >
+          <div class="flex items-center gap-2.5 flex-shrink-0">
+            <div
+              class="w-9 h-9 rounded-lg bg-s1/10 border border-s1/20 flex items-center justify-center"
+            >
+              <svg
+                class="w-4 h-4 text-s1"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                <path d="M2 17l10 5 10-5" />
+                <path d="M2 12l10 5 10-5" />
+              </svg>
+            </div>
+            <div>
+              <h1
+                class="text-base font-bold tracking-tight text-shimmer leading-tight"
+              >
+                BOIAuto
+              </h1>
+              <p
+                class="text-[10px] text-base-400 font-mono tracking-wider uppercase leading-tight"
+              >
+                Dual Slot
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 sm:gap-3">
+            <div
+              class="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-mono"
+              :class="slots[1].running?'border-s1/30 bg-s1/10 text-s1':'border-base-700/40 bg-base-800/40 text-base-500'"
+            >
+              <span class="relative flex items-center justify-center">
+                <span
+                  x-show="slots[1].running"
+                  class="absolute w-2 h-2 rounded-full bg-s1 pulse-ring"
+                ></span>
+                <span
+                  class="w-1.5 h-1.5 rounded-full"
+                  :class="slots[1].running?'bg-s1':'bg-base-600'"
+                ></span>
+              </span>
+              S1
+            </div>
+            <div
+              class="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-mono"
+              :class="slots[2].running?'border-s2/30 bg-s2/10 text-s2':'border-base-700/40 bg-base-800/40 text-base-500'"
+            >
+              <span class="relative flex items-center justify-center">
+                <span
+                  x-show="slots[2].running"
+                  class="absolute w-2 h-2 rounded-full bg-s2 pulse-ring"
+                ></span>
+                <span
+                  class="w-1.5 h-1.5 rounded-full"
+                  :class="slots[2].running?'bg-s2':'bg-base-600'"
+                ></span>
+              </span>
+              S2
+            </div>
+            <div
+              class="hidden sm:flex items-center gap-1.5 text-[11px] font-mono"
+              :class="wsOk?'text-base-400':'text-danger'"
+            >
+              <span
+                class="w-1.5 h-1.5 rounded-full"
+                :class="wsOk?'bg-base-400':'bg-danger animate-pulse'"
+              ></span>
+              <span x-text="wsOk?'WS':'RECONN'"></span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- ═══ MODE BAR ═══ -->
+      <div class="border-b border-base-800/35 bg-base-900/35 backdrop-blur-sm">
+        <div
+          class="max-w-6xl mx-auto px-4 sm:px-6 py-2 flex items-center gap-3"
+        >
+          <span
+            class="text-[11px] text-base-500 uppercase tracking-widest font-semibold flex-shrink-0"
+            >Mode</span
+          >
+          <div
+            class="flex rounded-lg border border-base-700/40 overflow-hidden"
+          >
+            <button
+              @click="mode='diplomacia'"
+              type="button"
+              class="px-3.5 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5"
+              :class="mode==='diplomacia'?'bg-s1/10 text-s1':'text-base-500 hover:text-base-300'"
+            >
+              <svg
+                class="w-3.5 h-3.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+              Diplomacia
+            </button>
+            <button
+              disabled
+              type="button"
+              class="px-3.5 py-1.5 text-xs font-medium text-base-600 border-l border-base-700/40 cursor-not-allowed flex items-center gap-1.5"
+            >
+              <svg
+                class="w-3.5 h-3.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="2" y1="12" x2="22" y2="12" />
+                <path
+                  d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
+                />
+              </svg>
+              Rival Regions
+              <span
+                class="text-[9px] bg-base-700/80 text-base-400 px-1.5 py-px rounded-full font-mono leading-none"
+                >Soon</span
+              >
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ MAIN ═══ -->
+      <main class="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-5 sm:py-7">
+        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-12 gap-5">
+          <!-- ── SLOT 1 ── -->
+          <section class="xl:col-span-3 xl:flex xl:flex-col">
+            <div
+              class="rounded-2xl border overflow-hidden transition-all duration-500 xl:flex-1 xl:flex xl:flex-col"
+              :class="slots[1].running?'border-s1/30 glow-s1 bg-base-900/80':'border-base-800/50 bg-base-900/45'"
+            >
+              <div
+                class="h-1 flex-shrink-0"
+                :class="slots[1].running?'bg-s1/60':'bg-base-700/40'"
+              ></div>
+              <div class="p-4 sm:p-5 space-y-3 xl:flex-1 xl:flex xl:flex-col">
+                <div class="flex items-center justify-between flex-shrink-0">
+                  <span
+                    class="text-xs font-mono font-bold text-s1 bg-s1/10 px-2 py-0.5 rounded"
+                    >SLOT 1</span
+                  >
+                  <span
+                    class="text-[11px] font-mono"
+                    :class="slots[1].running?'text-s1':'text-base-600'"
+                    x-text="slots[1].running?'AKTIF':'IDLE'"
+                  ></span>
+                </div>
+
+                <!-- Token -->
+                <div class="flex-shrink-0">
+                  <label class="block text-[11px] text-base-400 mb-1"
+                    >Authorization Token</label
+                  >
+                  <div class="relative">
+                    <input
+                      x-model="slots[1].token"
+                      :type="slots[1].showTk?'text':'password'"
+                      :disabled="slots[1].running"
+                      placeholder="Bearer token..."
+                      class="w-full rounded-lg bg-base-800 border border-base-700 text-sm px-3 py-2 pr-9 font-mono placeholder:text-base-600 transition-colors"
+                    />
+                    <button
+                      @click="slots[1].showTk=!slots[1].showTk"
+                      type="button"
+                      class="absolute right-2 top-1/2 -translate-y-1/2 text-base-500 hover:text-base-200 transition-colors p-0.5"
+                    >
+                      <svg
+                        x-show="!slots[1].showTk"
+                        class="w-4 h-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path
+                          d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                        />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                      <svg
+                        x-show="slots[1].showTk"
+                        x-cloak
+                        class="w-4 h-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path
+                          d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"
+                        />
+                        <path
+                          d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"
+                        />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Skill (full width) -->
+                <div class="flex-shrink-0">
+                  <label class="block text-[11px] text-base-400 mb-1"
+                    >Skill</label
+                  >
+                  <div class="grid grid-cols-3 gap-1.5">
+                    <template x-for="s in skills" :key="'a1-'+s.value">
+                      <button
+                        @click="slots[1].skill=s.value"
+                        :disabled="slots[1].running"
+                        type="button"
+                        class="rounded-lg text-[11px] font-medium py-2 border transition-all text-center leading-tight"
+                        :class="slots[1].skill===s.value?'border-s1/50 bg-s1/10 text-s1':'border-base-700 bg-base-800 text-base-500 hover:text-base-300'"
+                      >
+                        <span x-text="s.label"></span>
+                      </button>
+                    </template>
+                  </div>
+                </div>
+
+                <!-- Pay -->
+                <div class="flex-shrink-0">
+                  <label class="block text-[11px] text-base-400 mb-1"
+                    >Bayar</label
+                  >
+                  <div class="grid grid-cols-2 gap-1.5">
+                    <button
+                      @click="slots[1].pay='1'"
+                      :disabled="slots[1].running"
+                      type="button"
+                      class="rounded-lg text-[11px] font-medium py-2 border transition-all flex items-center justify-center gap-1.5"
+                      :class="slots[1].pay==='1'?'border-s1/50 bg-s1/10 text-s1':'border-base-700 bg-base-800 text-base-500 hover:text-base-300'"
+                    >
+                      <svg
+                        class="w-3.5 h-3.5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <path
+                          d="M15 9.5a3 3 0 0 0-3-2.5H10a2.5 2.5 0 0 0 0 5h4a2.5 2.5 0 0 1 0 5h-2a3 3 0 0 1-3-2.5"
+                        />
+                      </svg>
+                      Uang
+                    </button>
+                    <button
+                      @click="slots[1].pay='2'"
+                      :disabled="slots[1].running"
+                      type="button"
+                      class="rounded-lg text-[11px] font-medium py-2 border transition-all flex items-center justify-center gap-1.5"
+                      :class="slots[1].pay==='2'?'border-s1/50 bg-s1/10 text-s1':'border-base-700 bg-base-800 text-base-500 hover:text-base-300'"
+                    >
+                      <svg
+                        class="w-3.5 h-3.5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path d="M6 3h12l4 6-10 13L2 9z" />
+                        <path d="M2 9h20" />
+                        <path d="M10 3l-4 6 6 13" />
+                        <path d="M14 3l4 6-6 13" />
+                      </svg>
+                      Diamond
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Tombol -->
+                <div class="flex gap-2 flex-shrink-0">
+                  <button
+                    @click="startSlot(1)"
+                    :disabled="slots[1].running||!slots[1].token.trim()"
+                    type="button"
+                    class="flex-1 rounded-lg font-semibold text-xs py-2.5 flex items-center justify-center gap-1.5 transition-all"
+                    :class="slots[1].running||!slots[1].token.trim()?'bg-base-700 text-base-500':'bg-s1 text-base-950 hover:bg-s1-dim active:scale-[.97]'"
+                  >
+                    <svg
+                      class="w-3.5 h-3.5"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <polygon points="5,3 19,12 5,21" />
+                    </svg>
+                    Mulai
+                  </button>
+                  <button
+                    @click="stopSlot(1)"
+                    :disabled="!slots[1].running"
+                    type="button"
+                    class="flex-1 rounded-lg font-semibold text-xs py-2.5 flex items-center justify-center gap-1.5 border transition-all"
+                    :class="!slots[1].running?'border-base-700 bg-base-800 text-base-600':'border-danger/40 bg-danger/10 text-danger hover:bg-danger/15 active:scale-[.97]'"
+                  >
+                    <svg
+                      class="w-3.5 h-3.5"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <rect x="6" y="6" width="12" height="12" rx="1.5" />
+                    </svg>
+                    Stop
+                  </button>
+                </div>
+
+                <!-- Error -->
+                <div
+                  x-show="slots[1].error"
+                  x-transition.opacity.duration.200ms
+                  class="rounded-lg bg-danger/10 border border-danger/20 px-3 py-2 text-[11px] text-danger font-mono leading-snug flex-shrink-0"
+                  x-text="slots[1].error"
+                ></div>
+
+                <!-- Stats: ditarik ke bawah pada xl -->
+                <div class="xl:mt-auto flex-shrink-0 pt-1">
+                  <div class="grid grid-cols-3 gap-2">
+                    <div
+                      class="rounded-lg bg-base-800/50 border border-base-700/30 p-2.5 text-center"
+                    >
+                      <p
+                        class="text-[9px] text-base-500 uppercase tracking-widest mb-1"
+                      >
+                        Current
+                      </p>
+                      <p
+                        class="text-2xl font-bold font-mono text-base-100"
+                        x-text="slots[1].currentLevel??'—'"
+                      >
+                        —
+                      </p>
+                    </div>
+                    <div
+                      class="rounded-lg bg-base-800/50 border border-base-700/30 p-2.5 text-center"
+                    >
+                      <p
+                        class="text-[9px] text-base-500 uppercase tracking-widest mb-1"
+                      >
+                        Next
+                      </p>
+                      <p
+                        class="text-2xl font-bold font-mono text-s1"
+                        x-text="slots[1].targetLevel??'—'"
+                      >
+                        —
+                      </p>
+                    </div>
+                    <div
+                      class="rounded-lg bg-base-800/50 border border-base-700/30 p-2.5 text-center"
+                    >
+                      <p
+                        class="text-[9px] text-base-500 uppercase tracking-widest mb-1"
+                      >
+                        Time
+                      </p>
+                      <p
+                        class="text-2xl font-bold font-mono leading-none"
+                        :class="timeClass(1)"
+                        :style="timeLow(1)?'animation:count-pulse 1s ease-in-out infinite':''"
+                        x-text="slots[1].time"
+                      >
+                        —
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── SLOT 2 ── -->
+          <section class="xl:col-span-3 xl:flex xl:flex-col">
+            <div
+              class="rounded-2xl border overflow-hidden transition-all duration-500 xl:flex-1 xl:flex xl:flex-col"
+              :class="slots[2].running?'border-s2/30 glow-s2 bg-base-900/80':'border-base-800/50 bg-base-900/45'"
+            >
+              <div
+                class="h-1 flex-shrink-0"
+                :class="slots[2].running?'bg-s2/60':'bg-base-700/40'"
+              ></div>
+              <div class="p-4 sm:p-5 space-y-3 xl:flex-1 xl:flex xl:flex-col">
+                <div class="flex items-center justify-between flex-shrink-0">
+                  <span
+                    class="text-xs font-mono font-bold text-s2 bg-s2/10 px-2 py-0.5 rounded"
+                    >SLOT 2</span
+                  >
+                  <span
+                    class="text-[11px] font-mono"
+                    :class="slots[2].running?'text-s2':'text-base-600'"
+                    x-text="slots[2].running?'AKTIF':'IDLE'"
+                  ></span>
+                </div>
+
+                <div class="flex-shrink-0">
+                  <label class="block text-[11px] text-base-400 mb-1"
+                    >Authorization Token</label
+                  >
+                  <div class="relative">
+                    <input
+                      x-model="slots[2].token"
+                      :type="slots[2].showTk?'text':'password'"
+                      :disabled="slots[2].running"
+                      placeholder="Bearer token..."
+                      class="w-full rounded-lg bg-base-800 border border-base-700 text-sm px-3 py-2 pr-9 font-mono placeholder:text-base-600 transition-colors s2f"
+                    />
+                    <button
+                      @click="slots[2].showTk=!slots[2].showTk"
+                      type="button"
+                      class="absolute right-2 top-1/2 -translate-y-1/2 text-base-500 hover:text-base-200 transition-colors p-0.5"
+                    >
+                      <svg
+                        x-show="!slots[2].showTk"
+                        class="w-4 h-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path
+                          d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                        />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                      <svg
+                        x-show="slots[2].showTk"
+                        x-cloak
+                        class="w-4 h-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path
+                          d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"
+                        />
+                        <path
+                          d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"
+                        />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="flex-shrink-0">
+                  <label class="block text-[11px] text-base-400 mb-1"
+                    >Skill</label
+                  >
+                  <div class="grid grid-cols-3 gap-1.5">
+                    <template x-for="s in skills" :key="'a2-'+s.value">
+                      <button
+                        @click="slots[2].skill=s.value"
+                        :disabled="slots[2].running"
+                        type="button"
+                        class="rounded-lg text-[11px] font-medium py-2 border transition-all text-center leading-tight"
+                        :class="slots[2].skill===s.value?'border-s2/50 bg-s2/10 text-s2':'border-base-700 bg-base-800 text-base-500 hover:text-base-300'"
+                      >
+                        <span x-text="s.label"></span>
+                      </button>
+                    </template>
+                  </div>
+                </div>
+
+                <div class="flex-shrink-0">
+                  <label class="block text-[11px] text-base-400 mb-1"
+                    >Bayar</label
+                  >
+                  <div class="grid grid-cols-2 gap-1.5">
+                    <button
+                      @click="slots[2].pay='1'"
+                      :disabled="slots[2].running"
+                      type="button"
+                      class="rounded-lg text-[11px] font-medium py-2 border transition-all flex items-center justify-center gap-1.5"
+                      :class="slots[2].pay==='1'?'border-s2/50 bg-s2/10 text-s2':'border-base-700 bg-base-800 text-base-500 hover:text-base-300'"
+                    >
+                      <svg
+                        class="w-3.5 h-3.5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <path
+                          d="M15 9.5a3 3 0 0 0-3-2.5H10a2.5 2.5 0 0 0 0 5h4a2.5 2.5 0 0 1 0 5h-2a3 3 0 0 1-3-2.5"
+                        />
+                      </svg>
+                      Uang
+                    </button>
+                    <button
+                      @click="slots[2].pay='2'"
+                      :disabled="slots[2].running"
+                      type="button"
+                      class="rounded-lg text-[11px] font-medium py-2 border transition-all flex items-center justify-center gap-1.5"
+                      :class="slots[2].pay==='2'?'border-s2/50 bg-s2/10 text-s2':'border-base-700 bg-base-800 text-base-500 hover:text-base-300'"
+                    >
+                      <svg
+                        class="w-3.5 h-3.5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path d="M6 3h12l4 6-10 13L2 9z" />
+                        <path d="M2 9h20" />
+                        <path d="M10 3l-4 6 6 13" />
+                        <path d="M14 3l4 6-6 13" />
+                      </svg>
+                      Diamond
+                    </button>
+                  </div>
+                </div>
+
+                <div class="flex gap-2 flex-shrink-0">
+                  <button
+                    @click="startSlot(2)"
+                    :disabled="slots[2].running||!slots[2].token.trim()"
+                    type="button"
+                    class="flex-1 rounded-lg font-semibold text-xs py-2.5 flex items-center justify-center gap-1.5 transition-all"
+                    :class="slots[2].running||!slots[2].token.trim()?'bg-base-700 text-base-500':'bg-s2 text-base-950 hover:bg-s2-dim active:scale-[.97]'"
+                  >
+                    <svg
+                      class="w-3.5 h-3.5"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <polygon points="5,3 19,12 5,21" />
+                    </svg>
+                    Mulai
+                  </button>
+                  <button
+                    @click="stopSlot(2)"
+                    :disabled="!slots[2].running"
+                    type="button"
+                    class="flex-1 rounded-lg font-semibold text-xs py-2.5 flex items-center justify-center gap-1.5 border transition-all"
+                    :class="!slots[2].running?'border-base-700 bg-base-800 text-base-600':'border-danger/40 bg-danger/10 text-danger hover:bg-danger/15 active:scale-[.97]'"
+                  >
+                    <svg
+                      class="w-3.5 h-3.5"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <rect x="6" y="6" width="12" height="12" rx="1.5" />
+                    </svg>
+                    Stop
+                  </button>
+                </div>
+
+                <div
+                  x-show="slots[2].error"
+                  x-transition.opacity.duration.200ms
+                  class="rounded-lg bg-danger/10 border border-danger/20 px-3 py-2 text-[11px] text-danger font-mono leading-snug flex-shrink-0"
+                  x-text="slots[2].error"
+                ></div>
+
+                <div class="xl:mt-auto flex-shrink-0 pt-1">
+                  <div class="grid grid-cols-3 gap-2">
+                    <div
+                      class="rounded-lg bg-base-800/50 border border-base-700/30 p-2.5 text-center"
+                    >
+                      <p
+                        class="text-[9px] text-base-500 uppercase tracking-widest mb-1"
+                      >
+                        Current
+                      </p>
+                      <p
+                        class="text-2xl font-bold font-mono text-base-100"
+                        x-text="slots[2].currentLevel??'—'"
+                      >
+                        —
+                      </p>
+                    </div>
+                    <div
+                      class="rounded-lg bg-base-800/50 border border-base-700/30 p-2.5 text-center"
+                    >
+                      <p
+                        class="text-[9px] text-base-500 uppercase tracking-widest mb-1"
+                      >
+                        Next
+                      </p>
+                      <p
+                        class="text-2xl font-bold font-mono text-s2"
+                        x-text="slots[2].targetLevel??'—'"
+                      >
+                        —
+                      </p>
+                    </div>
+                    <div
+                      class="rounded-lg bg-base-800/50 border border-base-700/30 p-2.5 text-center"
+                    >
+                      <p
+                        class="text-[9px] text-base-500 uppercase tracking-widest mb-1"
+                      >
+                        Time
+                      </p>
+                      <p
+                        class="text-2xl font-bold font-mono leading-none"
+                        :class="timeClass(2)"
+                        :style="timeLow(2)?'animation:count-pulse 1s ease-in-out infinite':''"
+                        x-text="slots[2].time"
+                      >
+                        —
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── LOG VIEWER ── -->
+          <section class="lg:col-span-2 xl:col-span-6">
+            <div
+              class="rounded-2xl border border-base-800/50 bg-base-900/45 overflow-hidden flex flex-col h-[420px] lg:h-[380px] xl:h-[calc(100vh-9.5rem)]"
+            >
+              <!-- Header -->
+              <div
+                class="px-4 py-2.5 border-b border-base-800/50 flex items-center justify-between bg-base-900/70 backdrop-blur-sm flex-shrink-0 gap-2"
+              >
+                <div class="flex items-center gap-2 flex-shrink-0">
+                  <div class="flex gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-danger/60"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-warn/60"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-s1/60"></span>
+                  </div>
+                  <span
+                    class="text-xs font-semibold text-base-200 uppercase tracking-widest hidden sm:inline"
+                    >Log</span
+                  >
+                </div>
+                <div class="flex items-center gap-1.5 flex-wrap justify-end">
+                  <div
+                    class="flex rounded-md border border-base-700/40 overflow-hidden text-[10px] font-mono"
+                  >
+                    <button
+                      @click="fSlot='all'"
+                      type="button"
+                      class="px-2 py-0.5 transition-colors"
+                      :class="fSlot==='all'?'bg-base-700/60 text-base-100':'text-base-500 hover:text-base-300'"
+                    >
+                      All
+                    </button>
+                    <button
+                      @click="fSlot='1'"
+                      type="button"
+                      class="px-2 py-0.5 transition-colors border-l border-base-700/40"
+                      :class="fSlot==='1'?'bg-s1/15 text-s1':'text-base-500 hover:text-base-300'"
+                    >
+                      S1
+                    </button>
+                    <button
+                      @click="fSlot='2'"
+                      type="button"
+                      class="px-2 py-0.5 transition-colors border-l border-base-700/40"
+                      :class="fSlot==='2'?'bg-s2/15 text-s2':'text-base-500 hover:text-base-300'"
+                    >
+                      S2
+                    </button>
+                  </div>
+                  <div
+                    class="flex rounded-md border border-base-700/40 overflow-hidden text-[10px] font-mono"
+                  >
+                    <button
+                      @click="fType='all'"
+                      type="button"
+                      class="px-2 py-0.5 transition-colors"
+                      :class="fType==='all'?'bg-base-700/60 text-base-100':'text-base-500 hover:text-base-300'"
+                    >
+                      All
+                    </button>
+                    <button
+                      @click="fType='success'"
+                      type="button"
+                      class="px-2 py-0.5 transition-colors border-l border-base-700/40"
+                      :class="fType==='success'?'bg-s1/15 text-s1':'text-base-500 hover:text-base-300'"
+                    >
+                      OK
+                    </button>
+                    <button
+                      @click="fType='error'"
+                      type="button"
+                      class="px-2 py-0.5 transition-colors border-l border-base-700/40"
+                      :class="fType==='error'?'bg-danger/15 text-danger':'text-base-500 hover:text-base-300'"
+                    >
+                      Err
+                    </button>
+                  </div>
+                  <button
+                    @click="clearLogs()"
+                    type="button"
+                    title="Bersihkan"
+                    class="text-base-500 hover:text-base-200 transition-colors p-0.5 rounded"
+                  >
+                    <svg
+                      class="w-3.5 h-3.5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                      <path d="M10 11v6" />
+                      <path d="M14 11v6" />
+                      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Body -->
+              <div
+                class="flex-1 overflow-y-auto log-scroll px-3 py-2 space-y-0.5 font-mono text-[12px] leading-relaxed"
+                x-ref="logBox"
+              >
+                <template x-for="log in filteredLogs" :key="log._id">
+                  <div
+                    class="flex items-start gap-2 py-0.5 px-1.5 rounded hover:bg-base-800/30 transition-colors"
+                    x-transition:enter="transition ease-out duration-150"
+                    x-transition:enter-start="opacity-0 -translate-y-0.5"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                  >
+                    <span
+                      class="text-base-600 flex-shrink-0 text-[10px] pt-px select-none w-[58px]"
+                      x-text="log.time"
+                    ></span>
+                    <span
+                      class="flex-shrink-0 text-[9px] font-bold px-1 py-px rounded mt-px"
+                      :class="log.slot===1?'bg-s1/15 text-s1':'bg-s2/15 text-s2'"
+                      x-text="'S'+log.slot"
+                    ></span>
+                    <span
+                      class="flex-shrink-0 mt-px"
+                      x-html="logIcon(log.logType)"
+                    ></span>
+                    <span
+                      class="break-all"
+                      :class="logColor(log)"
+                      x-text="log.text"
+                    ></span>
+                  </div>
+                </template>
+                <div
+                  x-show="logs.length===0"
+                  class="flex flex-col items-center justify-center h-full text-base-600 select-none"
+                >
+                  <svg
+                    class="w-10 h-10 mb-2.5 opacity-20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                    />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                  </svg>
+                  <p class="text-xs">Belum ada aktivitas</p>
+                </div>
+              </div>
+
+              <!-- Footer -->
+              <div
+                class="px-4 py-1.5 border-t border-base-800/50 bg-base-900/70 flex items-center justify-between text-[10px] font-mono text-base-600 flex-shrink-0"
+              >
+                <span x-text="filteredLogs.length+' entri'"></span>
+                <span
+                  x-show="slots[1].running||slots[2].running"
+                  class="flex items-center gap-1.5 text-base-400/50"
+                >
+                  <span
+                    class="w-1 h-1 rounded-full bg-s1 animate-pulse"
+                    x-show="slots[1].running"
+                  ></span>
+                  <span
+                    class="w-1 h-1 rounded-full bg-s2 animate-pulse"
+                    x-show="slots[2].running"
+                  ></span>
+                  live
+                </span>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <!-- ═══ FOOTER ═══ -->
+      <footer class="border-t border-base-800/30 py-3 mt-auto">
+        <div
+          class="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between text-[10px] text-base-600 font-mono"
+        >
+          <span>BOIAuto v2.1.0</span>
+          <span
+            x-text="mode==='diplomacia'?'Diplomacia · 2 Slot · WebSocket':'—'"
+          ></span>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      function boiauto() {
+        const LS_KEY = "boiauto_cache";
+        const SKILL_UI = {
+          kisla: "Barak",
+          savas_teknikleri: "Teknik Perang",
+          bilim_insani: "Ilmuan",
+        };
+        let _lid = 0;
+
+        function mkSlot() {
+          return {
+            running: false,
+            showTk: false,
+            error: "",
+            token: "",
+            skill: "3",
+            pay: "1",
+            currentLevel: null,
+            targetLevel: null,
+            pendingAt: null,
+            time: "—",
+            _cdIv: null,
           };
-          return m[t] || m.info;
-        },
+        }
 
-        /* ── Warna teks waktu (countdown) ── */
-        timeClass(n) {
-          const s = this.slots[n];
-          if (!s.pendingAt) return 'text-base-500';
-          const rem = new Date(s.pendingAt).getTime() - Date.now();
-          if (rem <= 0) return 'text-base-500';
-          if (rem < 10000) return 'text-warn';
-          return n === 1 ? 'text-s1' : 'text-s2';
-        },
+        return {
+          mode: "diplomacia",
+          ws: null,
+          wsOk: false,
+          wsRetry: 0,
+          slots: { 1: mkSlot(), 2: mkSlot() },
+          logs: [],
+          fSlot: "all",
+          fType: "all",
 
-        /* ── Apakah countdown < 10 detik (untuk pulse) ── */
-        timeLow(n) {
-          const s = this.slots[n];
-          if (!s.pendingAt) return false;
-          const rem = new Date(s.pendingAt).getTime() - Date.now();
-          return rem > 0 && rem < 10000;
-        },
+          skills: [
+            { value: "1", label: "Barak" },
+            { value: "2", label: "Teknik Perang" },
+            { value: "3", label: "Ilmuan" },
+          ],
 
-        /* ── Format ms → MM:SS atau H:MM:SS ── */
-        fmtCd(ms) {
-          if (ms <= 0) return '00:00';
-          const t = Math.floor(ms / 1000);
-          const h = Math.floor(t / 3600);
-          const m = Math.floor((t % 3600) / 60);
-          const s = t % 60;
-          const ss = String(s).padStart(2, '0');
-          const mm = String(m).padStart(2, '0');
-          return h > 0 ? h + ':' + mm + ':' + ss : mm + ':' + ss;
-        },
+          /* ── Filtered logs ── */
+          get filteredLogs() {
+            return this.logs.filter((l) => {
+              if (this.fSlot !== "all" && l.slot !== Number(this.fSlot))
+                return false;
+              if (this.fType !== "all" && l.logType !== this.fType)
+                return false;
+              return true;
+            });
+          },
 
-        now() { return new Date().toTimeString().slice(0, 8); },
+          /* ── Warna log per entry ── */
+          logColor(l) {
+            if (l.logType === "success")
+              return l.slot === 1 ? "text-s1" : "text-s2";
+            if (l.logType === "warn") return "text-warn";
+            if (l.logType === "error") return "text-danger";
+            if (l.logType === "stopped") return "text-base-400";
+            return "text-base-400";
+          },
 
-        /* ══════════════════════════════════
+          /* ── Ikon tipe log ── */
+          logIcon(t) {
+            const m = {
+              success:
+                '<svg class="w-3 h-3 text-s1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+              warn: '<svg class="w-3 h-3 text-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+              error:
+                '<svg class="w-3 h-3 text-danger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+              info: '<svg class="w-3 h-3 text-base-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+              stopped:
+                '<svg class="w-3 h-3 text-base-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>',
+            };
+            return m[t] || m.info;
+          },
+
+          /* ── Warna teks waktu (countdown) ── */
+          timeClass(n) {
+            const s = this.slots[n];
+            if (!s.pendingAt) return "text-base-500";
+            const rem = new Date(s.pendingAt).getTime() - Date.now();
+            if (rem <= 0) return "text-base-500";
+            if (rem < 10000) return "text-warn";
+            return n === 1 ? "text-s1" : "text-s2";
+          },
+
+          /* ── Apakah countdown < 10 detik (untuk pulse) ── */
+          timeLow(n) {
+            const s = this.slots[n];
+            if (!s.pendingAt) return false;
+            const rem = new Date(s.pendingAt).getTime() - Date.now();
+            return rem > 0 && rem < 10000;
+          },
+
+          /* ── Format ms → MM:SS atau H:MM:SS ── */
+          fmtCd(ms) {
+            if (ms <= 0) return "00:00";
+            const t = Math.floor(ms / 1000);
+            const h = Math.floor(t / 3600);
+            const m = Math.floor((t % 3600) / 60);
+            const s = t % 60;
+            const ss = String(s).padStart(2, "0");
+            const mm = String(m).padStart(2, "0");
+            return h > 0 ? h + ":" + mm + ":" + ss : mm + ":" + ss;
+          },
+
+          now() {
+            return new Date().toTimeString().slice(0, 8);
+          },
+
+          /* ══════════════════════════════════
            INIT
         ══════════════════════════════════ */
-        init() {
-          this.loadCache();
-          this.connectWS();
-          this.spawnParticles();
-        },
+          init() {
+            this.loadCache();
+            this.connectWS();
+            this.spawnParticles();
+          },
 
-        /* ── Load cache dari localStorage ── */
-        loadCache() {
-          let raw;
-          try { raw = JSON.parse(localStorage.getItem(LS_KEY)); } catch { return; }
-          if (!raw) return;
-          for (const n of [1, 2]) {
-            const c = raw[n];
-            if (!c || !c.pendingAt) continue;
+          /* ── Load cache dari localStorage ── */
+          loadCache() {
+            let raw;
+            try {
+              raw = JSON.parse(localStorage.getItem(LS_KEY));
+            } catch {
+              return;
+            }
+            if (!raw) return;
+            for (const n of [1, 2]) {
+              const c = raw[n];
+              if (!c || !c.pendingAt) continue;
+              const s = this.slots[n];
+              s.currentLevel = c.currentLevel ?? null;
+              s.targetLevel = c.targetLevel ?? null;
+              s.pendingAt = c.pendingAt;
+              const rem = new Date(c.pendingAt).getTime() - Date.now();
+              s.time = rem > 0 ? this.fmtCd(rem) : "00:00";
+              if (rem > 0) this.startCountdown(n);
+            }
+          },
+
+          /* ── Simpan cache ke localStorage ── */
+          saveCache(n) {
             const s = this.slots[n];
-            s.currentLevel = c.currentLevel ?? null;
-            s.targetLevel = c.targetLevel ?? null;
-            s.pendingAt = c.pendingAt;
-            const rem = new Date(c.pendingAt).getTime() - Date.now();
-            s.time = rem > 0 ? this.fmtCd(rem) : '00:00';
-            if (rem > 0) this.startCountdown(n);
-          }
-        },
+            if (!s.pendingAt) return;
+            let raw = {};
+            try {
+              raw = JSON.parse(localStorage.getItem(LS_KEY)) || {};
+            } catch {}
+            raw[n] = {
+              currentLevel: s.currentLevel,
+              targetLevel: s.targetLevel,
+              pendingAt: s.pendingAt,
+            };
+            localStorage.setItem(LS_KEY, JSON.stringify(raw));
+          },
 
-        /* ── Simpan cache ke localStorage ── */
-        saveCache(n) {
-          const s = this.slots[n];
-          if (!s.pendingAt) return;
-          let raw = {};
-          try { raw = JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch {}
-          raw[n] = {
-            currentLevel: s.currentLevel,
-            targetLevel: s.targetLevel,
-            pendingAt: s.pendingAt,
-          };
-          localStorage.setItem(LS_KEY, JSON.stringify(raw));
-        },
-
-        /* ══════════════════════════════════
+          /* ══════════════════════════════════
            COUNTDOWN TIMER
         ══════════════════════════════════ */
-        startCountdown(n) {
-          const s = this.slots[n];
-          if (s._cdIv) return;
-          /* Langsung set nilai awal */
-          const rem = new Date(s.pendingAt).getTime() - Date.now();
-          s.time = rem > 0 ? this.fmtCd(rem) : '00:00';
+          startCountdown(n) {
+            const s = this.slots[n];
+            if (s._cdIv) return;
+            /* Langsung set nilai awal */
+            const rem = new Date(s.pendingAt).getTime() - Date.now();
+            s.time = rem > 0 ? this.fmtCd(rem) : "00:00";
 
-          s._cdIv = setInterval(() => {
-            if (!s.pendingAt) { s.time = '—'; return; }
-            const r = new Date(s.pendingAt).getTime() - Date.now();
-            s.time = r > 0 ? this.fmtCd(r) : '00:00';
-          }, 500);
-        },
+            s._cdIv = setInterval(() => {
+              if (!s.pendingAt) {
+                s.time = "—";
+                return;
+              }
+              const r = new Date(s.pendingAt).getTime() - Date.now();
+              s.time = r > 0 ? this.fmtCd(r) : "00:00";
+            }, 500);
+          },
 
-        stopCountdown(n) {
-          const s = this.slots[n];
-          if (s._cdIv) { clearInterval(s._cdIv); s._cdIv = null; }
-        },
+          stopCountdown(n) {
+            const s = this.slots[n];
+            if (s._cdIv) {
+              clearInterval(s._cdIv);
+              s._cdIv = null;
+            }
+          },
 
-        /* ══════════════════════════════════
+          /* ══════════════════════════════════
            WEBSOCKET
         ══════════════════════════════════ */
-        connectWS() {
-          const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-          this.ws = new WebSocket(`${proto}//${location.host}/ws`);
+          connectWS() {
+            const proto = location.protocol === "https:" ? "wss:" : "ws:";
+            this.ws = new WebSocket(`${proto}//${location.host}/ws`);
 
-          this.ws.onopen = () => { this.wsOk = true; this.wsRetry = 0; };
+            this.ws.onopen = () => {
+              this.wsOk = true;
+              this.wsRetry = 0;
+            };
 
-          this.ws.onmessage = (e) => {
-            let msg;
-            try { msg = JSON.parse(e.data); } catch { return; }
-            this.handleMsg(msg);
-          };
+            this.ws.onmessage = (e) => {
+              let msg;
+              try {
+                msg = JSON.parse(e.data);
+              } catch {
+                return;
+              }
+              this.handleMsg(msg);
+            };
 
-          this.ws.onclose = () => {
-            this.wsOk = false;
-            const delay = Math.min(1000 * Math.pow(2, this.wsRetry), 30000);
-            this.wsRetry++;
-            setTimeout(() => this.connectWS(), delay);
-          };
+            this.ws.onclose = () => {
+              this.wsOk = false;
+              const delay = Math.min(1000 * Math.pow(2, this.wsRetry), 30000);
+              this.wsRetry++;
+              setTimeout(() => this.connectWS(), delay);
+            };
 
-          this.ws.onerror = () => {};
-        },
+            this.ws.onerror = () => {};
+          },
 
-        wsSend(d) {
-          if (this.ws && this.ws.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify(d));
-        },
+          wsSend(d) {
+            if (this.ws && this.ws.readyState === WebSocket.OPEN)
+              this.ws.send(JSON.stringify(d));
+          },
 
-        /* ══════════════════════════════════
+          /* ══════════════════════════════════
            HANDLE MESSAGE
         ══════════════════════════════════ */
-        handleMsg(msg) {
-          /* ── Status update dari server ── */
-          if (msg.type === 'status') {
-            for (const id of [1, 2]) {
-              const s = this.slots[id];
-              const was = s.running;
-              s.running = msg.slots[id]?.running ?? false;
-              /* Jika server bilang running tapi kita belum punya countdown,
+          handleMsg(msg) {
+            /* ── Status update dari server ── */
+            if (msg.type === "status") {
+              for (const id of [1, 2]) {
+                const s = this.slots[id];
+                const was = s.running;
+                s.running = msg.slots[id]?.running ?? false;
+                /* Jika server bilang running tapi kita belum punya countdown,
                  coba load dari cache (sudah dilakukan di init, tapi fallback) */
-              if (s.running && !was && !s._cdIv && s.pendingAt) {
-                const rem = new Date(s.pendingAt).getTime() - Date.now();
-                if (rem > 0) this.startCountdown(id);
+                if (s.running && !was && !s._cdIv && s.pendingAt) {
+                  const rem = new Date(s.pendingAt).getTime() - Date.now();
+                  if (rem > 0) this.startCountdown(id);
+                }
+              }
+            } else if (msg.type === "log") {
+
+            /* ── Log event ── */
+              /* Untuk success: buat teks dari data terstruktur */
+              if (msg.logType === "success") {
+                const skillName = SKILL_UI[msg.skill] || msg.skill;
+                msg.text =
+                  "[" +
+                  skillName +
+                  "] Lv." +
+                  msg.currentLevel +
+                  " → Lv." +
+                  msg.targetLevel;
+
+                const s = this.slots[msg.slot];
+                s.currentLevel = msg.currentLevel;
+                s.targetLevel = msg.targetLevel;
+                s.pendingAt = msg.pendingAt;
+                this.saveCache(msg.slot);
+
+                /* Reset countdown dengan pendingAt baru */
+                this.stopCountdown(msg.slot);
+                this.startCountdown(msg.slot);
+              }
+
+              this.logs.push({
+                _id: ++_lid,
+                time: this.now(),
+                slot: msg.slot,
+                logType: msg.logType,
+                text: msg.text,
+              });
+              if (this.logs.length > 600) this.logs = this.logs.slice(-450);
+              this.scrollLog();
+            } else if (msg.type === "stopped") {
+
+            /* ── Loop berhenti ── */
+              const s = this.slots[msg.slot];
+              s.running = false;
+              /* Jangan hentikan countdown — biar user lihat sisa waktu */
+              this.logs.push({
+                _id: ++_lid,
+                time: this.now(),
+                slot: msg.slot,
+                logType: "stopped",
+                text: msg.text,
+              });
+              this.scrollLog();
+            } else if (msg.type === "error") {
+
+            /* ── Error validasi dari server ── */
+              const s = this.slots[msg.slot];
+              if (s) {
+                s.error = msg.text;
+                const txt = msg.text;
+                setTimeout(() => {
+                  if (s.error === txt) s.error = "";
+                }, 6000);
               }
             }
-          }
+          },
 
-          /* ── Log event ── */
-          else if (msg.type === 'log') {
-            /* Untuk success: buat teks dari data terstruktur */
-            if (msg.logType === 'success') {
-              const skillName = SKILL_UI[msg.skill] || msg.skill;
-              msg.text = '[' + skillName + '] Lv.' + msg.currentLevel + ' → Lv.' + msg.targetLevel;
+          scrollLog() {
+            this.$nextTick(() => {
+              const el = this.$refs.logBox;
+              if (el) el.scrollTop = el.scrollHeight;
+            });
+          },
 
-              const s = this.slots[msg.slot];
-              s.currentLevel = msg.currentLevel;
-              s.targetLevel = msg.targetLevel;
-              s.pendingAt = msg.pendingAt;
-              this.saveCache(msg.slot);
-
-              /* Reset countdown dengan pendingAt baru */
-              this.stopCountdown(msg.slot);
-              this.startCountdown(msg.slot);
-            }
-
-            this.logs.push({ _id: ++_lid, time: this.now(), slot: msg.slot, logType: msg.logType, text: msg.text });
-            if (this.logs.length > 600) this.logs = this.logs.slice(-450);
-            this.scrollLog();
-          }
-
-          /* ── Loop berhenti ── */
-          else if (msg.type === 'stopped') {
-            const s = this.slots[msg.slot];
-            s.running = false;
-            /* Jangan hentikan countdown — biar user lihat sisa waktu */
-            this.logs.push({ _id: ++_lid, time: this.now(), slot: msg.slot, logType: 'stopped', text: msg.text });
-            this.scrollLog();
-          }
-
-          /* ── Error validasi dari server ── */
-          else if (msg.type === 'error') {
-            const s = this.slots[msg.slot];
-            if (s) {
-              s.error = msg.text;
-              const txt = msg.text;
-              setTimeout(() => { if (s.error === txt) s.error = ''; }, 6000);
-            }
-          }
-        },
-
-        scrollLog() {
-          this.$nextTick(() => {
-            const el = this.$refs.logBox;
-            if (el) el.scrollTop = el.scrollHeight;
-          });
-        },
-
-        /* ══════════════════════════════════
+          /* ══════════════════════════════════
            ACTIONS
         ══════════════════════════════════ */
-        startSlot(n) {
-          const s = this.slots[n];
-          s.error = '';
-          this.wsSend({
-            action: 'start', slot: n,
-            game: this.mode,
-            authorization: s.token,
-            skill: s.skill, pay: s.pay,
-          });
-        },
-
-        stopSlot(n) {
-          this.wsSend({ action: 'stop', slot: n });
-        },
-
-        clearLogs() {
-          this.logs = [];
-          for (const n of [1, 2]) {
+          startSlot(n) {
             const s = this.slots[n];
-            s.currentLevel = null;
-            s.targetLevel = null;
-            s.pendingAt = null;
-            s.time = '—';
-            this.stopCountdown(n);
-          }
-          localStorage.removeItem(LS_KEY);
-        },
+            s.error = "";
+            this.wsSend({
+              action: "start",
+              slot: n,
+              game: this.mode,
+              authorization: s.token,
+              skill: s.skill,
+              pay: s.pay,
+            });
+          },
 
-        /* ══════════════════════════════════
+          stopSlot(n) {
+            this.wsSend({ action: "stop", slot: n });
+          },
+
+          clearLogs() {
+            this.logs = [];
+            for (const n of [1, 2]) {
+              const s = this.slots[n];
+              s.currentLevel = null;
+              s.targetLevel = null;
+              s.pendingAt = null;
+              s.time = "—";
+              this.stopCountdown(n);
+            }
+            localStorage.removeItem(LS_KEY);
+          },
+
+          /* ══════════════════════════════════
            PARTICLES
         ══════════════════════════════════ */
-        spawnParticles() {
-          const c = document.getElementById('particles');
-          for (let i = 0; i < 14; i++) {
-            const p = document.createElement('div');
-            p.className = 'particle';
-            const sz = 2 + Math.random() * 2;
-            p.style.cssText = 'left:' + (Math.random()*100) + '%;width:' + sz + 'px;height:' + sz + 'px;animation-duration:' + (14+Math.random()*18) + 's;animation-delay:' + (Math.random()*14) + 's;';
-            if (i % 3 === 0) p.style.background = '#00c8ff';
-            c.appendChild(p);
-          }
-        },
-      };
-    }
-  </script>
-</body>
+          spawnParticles() {
+            const c = document.getElementById("particles");
+            for (let i = 0; i < 14; i++) {
+              const p = document.createElement("div");
+              p.className = "particle";
+              const sz = 2 + Math.random() * 2;
+              p.style.cssText =
+                "left:" +
+                Math.random() * 100 +
+                "%;width:" +
+                sz +
+                "px;height:" +
+                sz +
+                "px;animation-duration:" +
+                (14 + Math.random() * 18) +
+                "s;animation-delay:" +
+                Math.random() * 14 +
+                "s;";
+              if (i % 3 === 0) p.style.background = "#00c8ff";
+              c.appendChild(p);
+            }
+          },
+        };
+      }
+    </script>
+  </body>
 </html>
