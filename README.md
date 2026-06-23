@@ -33,6 +33,7 @@ Untuk update ke versi terbaru, jalankan ulang perintah instalasi di atas.
 ## Cara Mendapatkan Bearer Token
 
 ### Via Browser (Android)
+
 1. Unduh **Via Browser** dari Play Store.
 2. Buka **Setelan** → **Skrip** → tekan **+** → **Impor dari URL**:
    ```
@@ -42,6 +43,7 @@ Untuk update ke versi terbaru, jalankan ulang perintah instalasi di atas.
 4. Sidebar baru akan muncul — tekan **Salin** untuk menyimpan token.
 
 ### PC
+
 Buka DevTools browser (F12) → tab **Network** → lakukan aksi di game → cari request dengan header `Authorization: Bearer ...` → salin tokennya.
 
 ---
@@ -73,11 +75,11 @@ Tekan **Mulai** untuk memulai, **Stop** untuk menghentikan. Untuk mematikan serv
 
 ### Statistik per Slot
 
-| Kolom | Arti |
-|---|---|
-| **Current** | Level skill saat ini |
-| **Next** | Level yang sedang dikerjakan |
-| **Time** | Hitung mundur sampai selesai |
+| Kolom       | Arti                         |
+| ----------- | ---------------------------- |
+| **Current** | Level skill saat ini         |
+| **Next**    | Level yang sedang dikerjakan |
+| **Time**    | Hitung mundur sampai selesai |
 
 Waktu dihitung dari server game. Jika halaman di-refresh, countdown tetap lanjut — tidak direset ulang.
 
