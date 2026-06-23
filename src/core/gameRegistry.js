@@ -1,11 +1,15 @@
-import { handler as diplomaciaHandler } from "../commands/diplomacia.js";
+import { runUpgradeLoop } from "../games/diplomacia/service.js";
+import { resolveUpgradePayload } from "../games/diplomacia/validator.js";
 
-const registry = new Map([["diplomacia", diplomaciaHandler]]);
+const registry = new Map([
+  [
+    "diplomacia",
+    async ({ token, skill, pay, signal, onLog }) => {
+      const payload = resolveUpgradePayload({ skill, pay });
+      await runUpgradeLoop({ token, payload, signal, onLog });
+    },
+  ],
+]);
 
-export function resolveGameHandler(gameKey) {
-  return registry.get(gameKey) ?? null;
-}
-
-export function listAvailableGames() {
-  return Array.from(registry.keys());
-}
+export const resolveGameRunner = (key) => registry.get(key) ?? null;
+export const listAvailableGames = () => [...registry.keys()];

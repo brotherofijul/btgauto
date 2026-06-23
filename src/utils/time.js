@@ -1,5 +1,19 @@
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+export function sleepAbortable(ms, signal) {
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, ms);
+    signal.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(timer);
+        resolve();
+      },
+      { once: true },
+    );
+  });
+}
+
 export function formatCooldown(ms) {
   const totalSeconds = Math.floor(ms / 1000);
   const minutes = Math.floor(totalSeconds / 60);

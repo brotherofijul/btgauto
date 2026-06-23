@@ -1,9 +1,8 @@
 import { gotScraping } from "got-scraping";
 import UserAgent from "user-agents";
 
-export async function postJson(url, body, token) {
+export async function postJson(url, body, token, signal) {
   const userAgent = new UserAgent({ deviceCategory: "mobile" }).toString();
-
   return gotScraping({
     url,
     method: "POST",
@@ -15,5 +14,8 @@ export async function postJson(url, body, token) {
     },
     json: body,
     responseType: "json",
+    timeout: { request: 15000 },
+    retry: { limit: 0 },
+    signal,
   });
 }

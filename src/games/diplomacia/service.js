@@ -1,5 +1,5 @@
 import { postJson } from "../../core/httpClient.js";
-import { sleep, formatCooldown, randomJitter } from "../../utils/time.js";
+import { sleepAbortable, randomJitter } from "../../utils/time.js";
 import {
   API_URL,
   ERROR_RETRY_DELAY_MS,
@@ -7,38 +7,43 @@ import {
   JITTER_MAX_MS,
 } from "./config.js";
 
-export async function runUpgradeLoop({ token, payload, debug = false }) {
-  while (true) {
+export async function runUpgradeLoop({ token, payload, signal, onLog }) {
+  onLog({ type: "info", text: "Loop dimulai." });
+
+  while (!signal.aborted) {
     try {
-      const response = await postJson(API_URL, payload, token);
-      const data = response.body;
+      const { body: data } = await postJson(API_URL, payload, token, signal);
+      if (signal.aborted) break;
 
       if (data?.success) {
-        const waitLabel = formatCooldown(data.cooldown_ms);
-        console.log(
-          `[${data.skill}]: ${data.current_level} -> ${data.target_level} (${waitLabel})`,
+        onLog({
+          type: "success",
+          skill: data.skill,
+          currentLevel: data.current_level,
+          targetLevel: data.target_level,
+          cooldownMs: data.cooldown_ms,
+          pendingAt: data.pending_at,
+        });
+        await sleepAbortable(
+          data.cooldown_ms + randomJitter(JITTER_MIN_MS, JITTER_MAX_MS),
+          signal,
         );
-
-        const jitter = randomJitter(JITTER_MIN_MS, JITTER_MAX_MS);
-        await sleep(data.cooldown_ms + jitter);
       } else {
-        console.error("Gagal melakukan upgrade: Respons server tidak sukses.");
-        await sleep(ERROR_RETRY_DELAY_MS);
+        onLog({
+          type: "warn",
+          text: "Respons server tidak sukses — retry dalam 30 detik.",
+        });
+        await sleepAbortable(ERROR_RETRY_DELAY_MS, signal);
       }
-    } catch (error) {
-      logRequestError(error, debug);
-      await sleep(ERROR_RETRY_DELAY_MS);
+    } catch (err) {
+      if (signal.aborted) break;
+      onLog({
+        type: "error",
+        text: `${err.name}: ${err.message} — retry dalam 30 detik.`,
+      });
+      await sleepAbortable(ERROR_RETRY_DELAY_MS, signal);
     }
   }
-}
 
-function logRequestError(error, debug) {
-  console.error("Terjadi kesalahan koneksi atau API.");
-  if (!debug) return;
-
-  if (error.response?.body) {
-    console.error("Detail Error:", error.response.body);
-  } else {
-    console.error(error.message);
-  }
+  onLog({ type: "info", text: "Loop selesai." });
 }

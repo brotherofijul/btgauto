@@ -11,7 +11,10 @@
     "dev": "nodemon ./bin/index.js",
     "start": "node ./bin/index.js"
   },
-  "keywords": ["Game Automation", "Diplomacia"],
+  "keywords": [
+    "Game Automation",
+    "Diplomacia"
+  ],
   "type": "module",
   "license": "ISC",
   "engines": {
@@ -21,8 +24,11 @@
     "nodemon": "^3.1.14"
   },
   "dependencies": {
+    "@fastify/websocket": "^11.2.0",
     "commander": "^15.0.0",
+    "fastify": "^5.8.5",
     "got-scraping": "^4.2.1",
-    "user-agents": "^2.1.97"
+    "user-agents": "^2.1.97",
+    "ws": "^8.21.0"
   }
 }
