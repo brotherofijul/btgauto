@@ -3,12 +3,12 @@
 // @namespace    http://tampermonkey.net/
 // @version      1.0.0
 // @description  Bearer token extraction script for Diplomacia
-// @author       Broher of Ijul
+// @author       Brother of Ijul
 // @match        *diplomacia.com.tr/*
 // @run-at       document-end
 // @grant        none
-// @downloadURL https://github.com/brotherofijul/btgauto/raw/main/bearer-token-extractor.user.js
-// @updateURL     https://github.com/brotherofijul/btgauto/raw/main/bearer-token-extractor.user.js
+// @downloadURL  https://github.com/brotherofijul/btgauto/raw/main/bearer-token-extractor.user.js
+// @updateURL    https://github.com/brotherofijul/btgauto/raw/main/bearer-token-extractor.user.js
 // ==/UserScript==
 
 (function () {
