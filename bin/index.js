@@ -23,10 +23,10 @@ if (isNaN(PORT) || PORT <= 0 || PORT > 65535) {
 function openBrowser(url) {
   const isWin = process.platform === "win32";
   const isMac = process.platform === "darwin";
-  
+
   const cmd = isWin ? "cmd" : isMac ? "open" : "xdg-open";
   const args = isWin ? ["/c", "start", url] : [url];
-  
+
   spawn(cmd, args, { detached: true, stdio: "ignore" }).unref();
 }
 
@@ -35,11 +35,11 @@ const app = createApp();
 try {
   // Menggunakan HOST dan PORT hasil parsing argumen
   await app.listen({ port: PORT, host: HOST });
-  
+
   // Jika host diatur ke 0.0.0.0 (untuk NAT VPS), browser lokal tetap dibuka ke localhost
   const displayHost = HOST === "0.0.0.0" ? "localhost" : HOST;
-  const url = `http://displayHost:${PORT}`;
-  
+  const url = `http://${displayHost}:${PORT}`;
+
   console.log(`🚀 BOIAuto UI → http://${HOST}:${PORT}`);
   console.log(`🌐 Membuka browser ke → ${url}`);
   openBrowser(url);
@@ -48,7 +48,7 @@ try {
     await app.close();
     process.exit(0);
   };
-  
+
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
 } catch (err) {
