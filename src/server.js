@@ -70,57 +70,59 @@ export function createApp() {
 
   app.get("/", (_, reply) => reply.type("text/html").send(indexHtml));
 
-  app.get("/ws", { websocket: true }, (socket) => {
-    clients.add(socket);
+  app.register(async function (fastify) {
+    fastify.get("/ws", { websocket: true }, (socket) => {
+      clients.add(socket);
 
-    socket.send(
-      JSON.stringify({
-        type: "init",
-        status: snapshotStatus(),
-        cache: snapshotCache(),
-        logs: logCache,
-        lastLogId: nextLogId,
-      }),
-    );
+      socket.send(
+        JSON.stringify({
+          type: "init",
+          status: snapshotStatus(),
+          cache: snapshotCache(),
+          logs: logCache,
+          lastLogId: nextLogId,
+        }),
+      );
 
-    socket.on("message", async (raw) => {
-      let msg;
-      try {
-        msg = JSON.parse(raw.toString());
-      } catch {
-        return;
-      }
+      socket.on("message", async (raw) => {
+        let msg;
+        try {
+          msg = JSON.parse(raw.toString());
+        } catch {
+          return;
+        }
 
-      if (msg.action === "sync") {
-        socket.send(
-          JSON.stringify({
-            type: "sync",
-            status: snapshotStatus(),
-            cache: snapshotCache(),
-            logs: logCache,
-            lastLogId: nextLogId,
-          }),
-        );
-        return;
-      }
+        if (msg.action === "sync") {
+          socket.send(
+            JSON.stringify({
+              type: "sync",
+              status: snapshotStatus(),
+              cache: snapshotCache(),
+              logs: logCache,
+              lastLogId: nextLogId,
+            }),
+          );
+          return;
+        }
 
-      const n = Number(msg.slot);
-      if (n < 1 || n > SLOT_COUNT) {
-        return sendError(socket, n, "Slot tidak valid.");
-      }
+        const n = Number(msg.slot);
+        if (n < 1 || n > SLOT_COUNT) {
+          return sendError(socket, n, "Slot tidak valid.");
+        }
 
-      if (msg.action === "start") {
-        handleStart(socket, n, msg);
-      } else if (msg.action === "stop") {
-        await handleStop(socket, n);
-      } else if (msg.action === "status") {
-        socket.send(
-          JSON.stringify({ type: "status", slots: snapshotStatus() }),
-        );
-      }
+        if (msg.action === "start") {
+          handleStart(socket, n, msg);
+        } else if (msg.action === "stop") {
+          await handleStop(socket, n);
+        } else if (msg.action === "status") {
+          socket.send(
+            JSON.stringify({ type: "status", slots: snapshotStatus() }),
+          );
+        }
+      });
+
+      socket.on("close", () => clients.delete(socket));
     });
-
-    socket.on("close", () => clients.delete(socket));
   });
 
   return app;
