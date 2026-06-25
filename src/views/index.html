@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BOIAuto</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" type="text/tailwindcss" href="/style.css" />
     <script
       defer
       src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
@@ -15,205 +16,6 @@
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <style type="text/tailwindcss">
-      @theme {
-        --font-display: "Space Grotesk", sans-serif;
-        --font-mono: "JetBrains Mono", monospace;
-        --color-base-950: #0a0e0d;
-        --color-base-900: #111916;
-        --color-base-800: #1a2420;
-        --color-base-700: #243430;
-        --color-base-600: #2e443d;
-        --color-base-400: #5a7a6e;
-        --color-base-200: #a3c4b5;
-        --color-base-100: #d0e8dc;
-        --color-s1: #00e88f;
-        --color-s1-dim: #00c278;
-        --color-s2: #00c8ff;
-        --color-s2-dim: #00a8d6;
-        --color-warn: #f5a623;
-        --color-danger: #ff4d6a;
-      }
-    </style>
-    <style>
-      *,
-      *::before,
-      *::after {
-        box-sizing: border-box;
-      }
-      body {
-        font-family: "Space Grotesk", sans-serif;
-        background: #0a0e0d;
-        margin: 0;
-      }
-
-      .log-scroll::-webkit-scrollbar {
-        width: 5px;
-      }
-      .log-scroll::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      .log-scroll::-webkit-scrollbar-thumb {
-        background: #2e443d;
-        border-radius: 10px;
-      }
-
-      @keyframes pulse-ring {
-        0% {
-          transform: scale(1);
-          opacity: 0.6;
-        }
-        100% {
-          transform: scale(2.4);
-          opacity: 0;
-        }
-      }
-      .pulse-ring {
-        animation: pulse-ring 1.4s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
-      }
-
-      @keyframes glow-1 {
-        0%,
-        100% {
-          border-color: rgba(0, 232, 143, 0.18);
-        }
-        50% {
-          border-color: rgba(0, 232, 143, 0.45);
-        }
-      }
-      @keyframes glow-2 {
-        0%,
-        100% {
-          border-color: rgba(0, 200, 255, 0.18);
-        }
-        50% {
-          border-color: rgba(0, 200, 255, 0.45);
-        }
-      }
-      .glow-s1 {
-        animation: glow-1 2s ease-in-out infinite;
-      }
-      .glow-s2 {
-        animation: glow-2 2s ease-in-out infinite;
-      }
-
-      @keyframes shimmer {
-        0% {
-          background-position: -200% center;
-        }
-        100% {
-          background-position: 200% center;
-        }
-      }
-      .text-shimmer {
-        background: linear-gradient(
-          90deg,
-          #00e88f 0%,
-          #a0ffd8 40%,
-          #00e88f 80%
-        );
-        background-size: 200% auto;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        animation: shimmer 4s linear infinite;
-      }
-
-      .bg-grid {
-        background-image:
-          linear-gradient(rgba(0, 232, 143, 0.02) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(0, 232, 143, 0.02) 1px, transparent 1px);
-        background-size: 44px 44px;
-      }
-      .bg-glow::before,
-      .bg-glow::after {
-        content: "";
-        position: fixed;
-        pointer-events: none;
-        z-index: 0;
-        border-radius: 50%;
-      }
-      .bg-glow::before {
-        top: -18%;
-        right: -8%;
-        width: 520px;
-        height: 520px;
-        background: radial-gradient(
-          circle,
-          rgba(0, 232, 143, 0.05) 0%,
-          transparent 70%
-        );
-      }
-      .bg-glow::after {
-        bottom: -14%;
-        left: -8%;
-        width: 440px;
-        height: 440px;
-        background: radial-gradient(
-          circle,
-          rgba(0, 200, 255, 0.035) 0%,
-          transparent 70%
-        );
-      }
-
-      @keyframes float-up {
-        0% {
-          transform: translateY(100vh) scale(0);
-          opacity: 0;
-        }
-        10% {
-          opacity: 0.6;
-        }
-        90% {
-          opacity: 0.6;
-        }
-        100% {
-          transform: translateY(-10vh) scale(1);
-          opacity: 0;
-        }
-      }
-      .particle {
-        position: fixed;
-        border-radius: 50%;
-        pointer-events: none;
-        z-index: 0;
-        opacity: 0;
-        animation: float-up linear infinite;
-      }
-
-      input:focus,
-      select:focus {
-        outline: none;
-        box-shadow:
-          0 0 0 2px #00e88f,
-          0 0 10px rgba(0, 232, 143, 0.1);
-      }
-      input.s2f:focus {
-        box-shadow:
-          0 0 0 2px #00c8ff,
-          0 0 10px rgba(0, 200, 255, 0.1);
-      }
-      button:disabled {
-        opacity: 0.32;
-        cursor: not-allowed;
-      }
-      [x-cloak] {
-        display: none !important;
-      }
-
-      @keyframes count-pulse {
-        0%,
-        100% {
-          opacity: 1;
-        }
-        50% {
-          opacity: 0.5;
-        }
-      }
-      .count-pulse {
-        animation: count-pulse 1s ease-in-out infinite;
-      }
-    </style>
   </head>
   <body class="min-h-screen text-base-100 bg-grid bg-glow overflow-x-hidden">
     <div
@@ -828,44 +630,8 @@
       </footer>
     </div>
 
+    <script src="/script.js"></script>
     <script>
-      // src/views/index.html
-      const LS_TOKENS = "boiauto_tokens";
-      const LS_COOLDOWN = "boiauto_cooldown";
-      const SKILL_UI = {
-        kisla: "Barak",
-        savas_teknikleri: "Teknik Perang",
-        bilim_insani: "Ilmuan",
-      };
-      const ICONS = {
-        success:
-          '<svg class="w-3 h-3 text-s1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
-        warn: '<svg class="w-3 h-3 text-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
-        error:
-          '<svg class="w-3 h-3 text-danger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
-        info: '<svg class="w-3 h-3 text-base-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
-        retry:
-          '<svg class="w-3 h-3 text-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>',
-        stopped:
-          '<svg class="w-3 h-3 text-base-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>',
-      };
-
-      function createSlot() {
-        return {
-          running: false,
-          showTk: false,
-          error: "",
-          token: "",
-          skill: "3",
-          pay: "1",
-          currentLevel: null,
-          targetLevel: null,
-          pendingAt: null,
-          time: "\u2014",
-          _timer: null,
-        };
-      }
-
       function boiauto() {
         return {
           mode: "diplomacia",
@@ -896,7 +662,7 @@
           init() {
             this.loadTokens();
             this.connectWS();
-            this.spawnParticles();
+            spawnParticles();
           },
 
           loadTokens() {
@@ -1211,29 +977,6 @@
               this.$refs.logBox &&
                 (this.$refs.logBox.scrollTop = this.$refs.logBox.scrollHeight);
             });
-          },
-
-          spawnParticles() {
-            const c = document.getElementById("particles");
-            for (let i = 0; i < 14; i++) {
-              const p = document.createElement("div");
-              p.className = "particle";
-              const sz = 2 + Math.random() * 2;
-              p.style.cssText =
-                "left:" +
-                Math.random() * 100 +
-                "%;width:" +
-                sz +
-                "px;height:" +
-                sz +
-                "px;animation-duration:" +
-                (14 + Math.random() * 18) +
-                "s;animation-delay:" +
-                Math.random() * 14 +
-                "s;";
-              if (i % 3 === 0) p.style.background = "#00c8ff";
-              c.appendChild(p);
-            }
           },
         };
       }

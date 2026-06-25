@@ -1,7 +1,7 @@
 // src/server.js
 import Fastify from "fastify";
 import fastifyWebsocket from "@fastify/websocket";
-import { readFileSync } from "fs";
+import fastifyStatic from "@fastify/static";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 
@@ -14,7 +14,6 @@ const SLOT_COUNT = 2;
 const LOG_CACHE_MAX = 20;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const indexHtml = readFileSync(join(__dirname, "views/index.html"), "utf-8");
 
 function createSlot() {
   return {
@@ -67,8 +66,6 @@ function snapshotCache() {
 export function createApp() {
   const app = Fastify({ logger: false });
   app.register(fastifyWebsocket);
-
-  app.get("/", (_, reply) => reply.type("text/html").send(indexHtml));
 
   app.register(async function (fastify) {
     fastify.get("/ws", { websocket: true }, (socket) => {
@@ -123,6 +120,11 @@ export function createApp() {
 
       socket.on("close", () => clients.delete(socket));
     });
+  });
+
+  app.register(fastifyStatic, {
+    root: join(__dirname, "views"),
+    prefix: "/",
   });
 
   return app;
