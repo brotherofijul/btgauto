@@ -828,11 +828,8 @@
       </footer>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════
-       LOGIC
-  ═══════════════════════════════════════════════════════════════ -->
     <script>
-      /* ── Konstanta ── */
+      // src/views/index.html
       const LS_TOKENS = "boiauto_tokens";
       const LS_COOLDOWN = "boiauto_cooldown";
       const SKILL_UI = {
@@ -853,7 +850,6 @@
           '<svg class="w-3 h-3 text-base-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>',
       };
 
-      /* ── Factory ── */
       function createSlot() {
         return {
           running: false,
@@ -872,7 +868,6 @@
 
       function boiauto() {
         return {
-          /* ── State ── */
           mode: "diplomacia",
           ws: null,
           wsOk: false,
@@ -888,9 +883,6 @@
             { value: "3", label: "Ilmuan" },
           ],
 
-          /* ════════════════════════════════
-           Computed
-        ════════════════════════════════ */
           get filteredLogs() {
             return this.logs.filter((l) => {
               if (this.fSlot !== "all" && l.slot !== Number(this.fSlot))
@@ -901,18 +893,12 @@
             });
           },
 
-          /* ════════════════════════════════
-           Init
-        ════════════════════════════════ */
           init() {
             this.loadTokens();
             this.connectWS();
             this.spawnParticles();
           },
 
-          /* ════════════════════════════════
-           Cache: Bearer Token
-        ════════════════════════════════ */
           loadTokens() {
             try {
               const d = JSON.parse(localStorage.getItem(LS_TOKENS)) || {};
@@ -929,9 +915,6 @@
             } catch {}
           },
 
-          /* ════════════════════════════════
-           Cache: Cooldown (pendingAt)
-        ════════════════════════════════ */
           saveCooldown(n) {
             const s = this.slots[n];
             if (!s.pendingAt) return;
@@ -957,9 +940,6 @@
             } catch {}
           },
 
-          /* ════════════════════════════════
-           Countdown Timer
-        ════════════════════════════════ */
           startCountdown(n) {
             const s = this.slots[n];
             if (s._timer) return;
@@ -983,9 +963,6 @@
             }
           },
 
-          /* ════════════════════════════════
-           WebSocket
-        ════════════════════════════════ */
           connectWS() {
             const proto = location.protocol === "https:" ? "wss:" : "ws:";
             this.ws = new WebSocket(proto + "//" + location.host + "/ws");
@@ -1013,14 +990,17 @@
               this.ws.send(JSON.stringify(data));
           },
 
-          /* ════════════════════════════════
-           Message Handler
-        ════════════════════════════════ */
           handleMsg(msg) {
             switch (msg.type) {
               case "init":
               case "sync":
                 this.handleServerSync(msg);
+                break;
+
+              case "status":
+                for (const id of [1, 2]) {
+                  this.slots[id].running = msg.slots[id]?.running ?? false;
+                }
                 break;
 
               case "log":
@@ -1037,17 +1017,12 @@
             }
           },
 
-          /* ════════════════════════════════
-           Server Sync (init / reconnect)
-           Menerima: status, cache, logs[], lastLogId
-        ════════════════════════════════ */
           handleServerSync(msg) {
             const st = msg.status || {};
             const cache = msg.cache || {};
             const logs = msg.logs || [];
             this.lastLogId = msg.lastLogId || 0;
 
-            /* restore slot state dari server */
             for (const id of [1, 2]) {
               const s = this.slots[id];
               const c = cache[id];
@@ -1073,7 +1048,6 @@
               }
             }
 
-            /* masukkan log cache (hanya yang belum ada di client) */
             for (const log of logs) {
               if (log._id > this.lastLogId) this.lastLogId = log._id;
               if (!this.logs.some((l) => l._id === log._id)) {
@@ -1084,11 +1058,7 @@
             this.scrollLog();
           },
 
-          /* ════════════════════════════════
-           Log Processing (dedup via _id)
-        ════════════════════════════════ */
           processLog(msg) {
-            /* dedup: skip kalau _id sudah pernah dilihat */
             if (msg._id != null) {
               if (msg._id <= this.lastLogId) return;
               this.lastLogId = msg._id;
@@ -1171,9 +1141,6 @@
             }, 6000);
           },
 
-          /* ════════════════════════════════
-           Actions
-        ════════════════════════════════ */
           startSlot(n) {
             const s = this.slots[n];
             s.error = "";
@@ -1195,9 +1162,6 @@
             this.logs = [];
           },
 
-          /* ════════════════════════════════
-           UI Helpers
-        ════════════════════════════════ */
           logColor(l) {
             if (l.logType === "success")
               return l.slot === 1 ? "text-s1" : "text-s2";

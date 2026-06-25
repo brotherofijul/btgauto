@@ -1,3 +1,4 @@
+// src/server.js
 import Fastify from "fastify";
 import fastifyWebsocket from "@fastify/websocket";
 import { readFileSync } from "fs";
@@ -9,17 +10,11 @@ import { resolveUpgradePayload } from "./games/diplomacia/validator.js";
 import { postJson } from "./lib/http-client.js";
 import { API_CANCEL } from "./games/diplomacia/config.js";
 
-/* ── Constants ── */
-
 const SLOT_COUNT = 2;
 const LOG_CACHE_MAX = 20;
 
-/* ── Filesystem ── */
-
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const indexHtml = readFileSync(join(__dirname, "views/index.html"), "utf-8");
-
-/* ── Slot State ── */
 
 function createSlot() {
   return {
@@ -35,11 +30,9 @@ const slots = Object.fromEntries(
   Array.from({ length: SLOT_COUNT }, (_, i) => [i + 1, createSlot()]),
 );
 
-/* ── Clients & Log Cache ── */
-
 const clients = new Set();
 let nextLogId = 0;
-const logCache = []; // ring buffer, max LOG_CACHE_MAX
+const logCache = [];
 
 function pushLogCache(entry) {
   entry._id = ++nextLogId;
@@ -54,8 +47,6 @@ function broadcast(message) {
     if (ws.readyState === 1) ws.send(raw);
   }
 }
-
-/* ── Snapshot Helpers ── */
 
 function snapshotStatus() {
   const out = {};
@@ -73,8 +64,6 @@ function snapshotCache() {
   return out;
 }
 
-/* ── App Factory ── */
-
 export function createApp() {
   const app = Fastify({ logger: false });
   app.register(fastifyWebsocket);
@@ -84,7 +73,6 @@ export function createApp() {
   app.get("/ws", { websocket: true }, (socket) => {
     clients.add(socket);
 
-    /* Kirim status awal + log cache saat pertama connect */
     socket.send(
       JSON.stringify({
         type: "init",
@@ -138,8 +126,6 @@ export function createApp() {
   return app;
 }
 
-/* ── Action Handlers ── */
-
 function handleStart(socket, n, msg) {
   const slot = slots[n];
   if (slot.running) {
@@ -173,13 +159,11 @@ function handleStart(socket, n, msg) {
     const { type: logType, skill: evSkill, ...rest } = event;
     if (evSkill) slot.activeSkill = evSkill;
 
-    /* update server-side cache */
     if (rest.pendingAt) slot.cache.pendingAt = rest.pendingAt;
     if (rest.currentLevel != null) slot.cache.currentLevel = rest.currentLevel;
     if (rest.targetLevel != null) slot.cache.targetLevel = rest.targetLevel;
     if (evSkill) slot.cache.skill = evSkill;
 
-    /* broadcast log dengan _id unik untuk dedup client-side */
     const entry = { type: "log", slot: n, logType, skill: evSkill, ...rest };
     pushLogCache(entry);
     broadcast(entry);

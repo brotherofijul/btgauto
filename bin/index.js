@@ -1,5 +1,4 @@
-#!/usr/bin/env node
-
+// bin/index.js
 import { Command } from "commander";
 import { createApp } from "../src/server.js";
 

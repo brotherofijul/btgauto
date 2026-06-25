@@ -1,3 +1,4 @@
+// src/games/diplomacia/config.js
 export const SKILL_MAP = {
   1: "kisla",
   2: "savas_teknikleri",

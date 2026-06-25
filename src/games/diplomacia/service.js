@@ -1,3 +1,4 @@
+// src/games/diplomacia/service.js
 import { postJson } from "../../lib/http-client.js";
 import { sleepAbortable, randomJitter } from "../../lib/time.js";
 import {

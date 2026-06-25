@@ -1,3 +1,4 @@
+// src/lib/time.js
 export function sleepAbortable(ms, signal) {
   return new Promise((resolve) => {
     const timer = setTimeout(resolve, ms);

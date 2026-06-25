@@ -1,3 +1,4 @@
+// src/lib/registry.js
 import { runUpgradeLoop } from "../games/diplomacia/service.js";
 
 const registry = new Map([
