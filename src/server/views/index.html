@@ -1020,6 +1020,8 @@
             this.ws.onopen = () => {
               this.wsOk = true;
               this.wsRetry = 0;
+              /* Minta cache terbaru dari server (reconnect-safe) */
+              this.wsSend({ action: "sync" });
             };
             this.ws.onmessage = (e) => {
               try {
@@ -1046,6 +1048,10 @@
         ════════════════════════════════ */
           handleMsg(msg) {
             switch (msg.type) {
+              case "sync":
+                this.handleSync(msg);
+                break;
+
               case "status":
                 for (const id of [1, 2]) {
                   const s = this.slots[id];
@@ -1070,6 +1076,40 @@
               case "error":
                 this.handleSlotError(msg);
                 break;
+            }
+          },
+
+          /* ════════════════════════════════
+           Sync Handler (reconnect cache)
+        ════════════════════════════════ */
+          handleSync(msg) {
+            for (const id of [1, 2]) {
+              const c = msg.slots[id];
+              const st = msg.status?.[id];
+              if (!c) continue;
+              const s = this.slots[id];
+
+              /* update running state dari status */
+              if (st) s.running = st.running ?? s.running;
+
+              /* update cache dari server */
+              if (c.pendingAt) {
+                s.pendingAt = c.pendingAt;
+              }
+              if (c.currentLevel != null) s.currentLevel = c.currentLevel;
+              if (c.targetLevel != null) s.targetLevel = c.targetLevel;
+
+              /* restart countdown jika ada pendingAt valid */
+              this.stopCountdown(id);
+              if (s.pendingAt) {
+                const rem = new Date(s.pendingAt).getTime() - Date.now();
+                s.time = rem > 0 ? this.fmtCd(rem) : "00:00";
+                if (rem > 0 && s.running) this.startCountdown(id);
+                this.saveCooldown(id);
+              } else {
+                s.time = "—";
+                this.clearCooldown(id);
+              }
             }
           },
 

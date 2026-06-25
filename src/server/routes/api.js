@@ -11,6 +11,8 @@ function createSlotState() {
     running: false,
     activeSkill: null,
     token: null,
+    /* cache untuk sync ke client yang baru reconnect */
+    cache: { pendingAt: null, currentLevel: null, targetLevel: null, skill: null },
   };
 }
 
@@ -34,6 +36,20 @@ function snapshotStatus() {
   return out;
 }
 
+function snapshotCache() {
+  const out = {};
+  for (let i = 1; i <= SLOT_COUNT; i++) {
+    const c = slots[i].cache;
+    out[i] = {
+      pendingAt: c.pendingAt,
+      currentLevel: c.currentLevel,
+      targetLevel: c.targetLevel,
+      skill: c.skill,
+    };
+  }
+  return out;
+}
+
 function sendError(socket, slot, text) {
   socket.send(JSON.stringify({ type: "error", slot, text }));
 }
@@ -48,6 +64,14 @@ export async function apiRoutes(app) {
       try {
         msg = JSON.parse(raw.toString());
       } catch {
+        return;
+      }
+
+      /* sync tidak butuh slot — langsung proses */
+      if (msg.action === "sync") {
+        socket.send(
+          JSON.stringify({ type: "sync", slots: snapshotCache(), status: snapshotStatus() }),
+        );
         return;
       }
 
@@ -91,6 +115,13 @@ export async function apiRoutes(app) {
         const onLog = (event) => {
           const { type: logType, skill: evSkill, ...rest } = event;
           if (evSkill) slot.activeSkill = evSkill;
+
+          /* simpan cache terbaru (pendingAt, level, skill) */
+          if (rest.pendingAt) slot.cache.pendingAt = rest.pendingAt;
+          if (rest.currentLevel != null) slot.cache.currentLevel = rest.currentLevel;
+          if (rest.targetLevel != null) slot.cache.targetLevel = rest.targetLevel;
+          if (evSkill) slot.cache.skill = evSkill;
+
           broadcast({ type: "log", slot: n, logType, skill: evSkill, ...rest });
         };
 
@@ -104,6 +135,7 @@ export async function apiRoutes(app) {
           slot.running = false;
           slot.activeSkill = null;
           slot.token = null;
+          slot.cache = { pendingAt: null, currentLevel: null, targetLevel: null, skill: null };
           broadcast({ type: "stopped", slot: n, text: "Loop dihentikan." });
           broadcast({ type: "status", slots: snapshotStatus() });
         });
