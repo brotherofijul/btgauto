@@ -1,5 +1,3 @@
-export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
 export function sleepAbortable(ms, signal) {
   return new Promise((resolve) => {
     const timer = setTimeout(resolve, ms);

@@ -852,13 +852,6 @@
         stopped:
           '<svg class="w-3 h-3 text-base-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>',
       };
-      const LOG_COLORS = {
-        success: "s",
-        warn: "text-warn",
-        error: "text-danger",
-      };
-
-      let _logId = 0;
 
       /* ── Factory ── */
       function createSlot() {
@@ -872,7 +865,7 @@
           currentLevel: null,
           targetLevel: null,
           pendingAt: null,
-          time: "—",
+          time: "\u2014",
           _timer: null,
         };
       }
@@ -884,6 +877,7 @@
           ws: null,
           wsOk: false,
           wsRetry: 0,
+          lastLogId: 0,
           slots: { 1: createSlot(), 2: createSlot() },
           logs: [],
           fSlot: "all",
@@ -912,7 +906,6 @@
         ════════════════════════════════ */
           init() {
             this.loadTokens();
-            this.loadCooldown();
             this.connectWS();
             this.spawnParticles();
           },
@@ -939,27 +932,6 @@
           /* ════════════════════════════════
            Cache: Cooldown (pendingAt)
         ════════════════════════════════ */
-          loadCooldown() {
-            let raw;
-            try {
-              raw = JSON.parse(localStorage.getItem(LS_COOLDOWN));
-            } catch {
-              return;
-            }
-            if (!raw) return;
-            for (const n of [1, 2]) {
-              const c = raw[n];
-              if (!c?.pendingAt) continue;
-              const s = this.slots[n];
-              s.currentLevel = c.currentLevel ?? null;
-              s.targetLevel = c.targetLevel ?? null;
-              s.pendingAt = c.pendingAt;
-              const rem = new Date(c.pendingAt).getTime() - Date.now();
-              s.time = rem > 0 ? this.fmtCd(rem) : "00:00";
-              if (rem > 0) this.startCountdown(n);
-            }
-          },
-
           saveCooldown(n) {
             const s = this.slots[n];
             if (!s.pendingAt) return;
@@ -993,7 +965,7 @@
             if (s._timer) return;
             const tick = () => {
               if (!s.pendingAt) {
-                s.time = "—";
+                s.time = "\u2014";
                 return;
               }
               const r = new Date(s.pendingAt).getTime() - Date.now();
@@ -1020,8 +992,6 @@
             this.ws.onopen = () => {
               this.wsOk = true;
               this.wsRetry = 0;
-              /* Minta cache terbaru dari server (reconnect-safe) */
-              this.wsSend({ action: "sync" });
             };
             this.ws.onmessage = (e) => {
               try {
@@ -1048,21 +1018,9 @@
         ════════════════════════════════ */
           handleMsg(msg) {
             switch (msg.type) {
+              case "init":
               case "sync":
-                this.handleSync(msg);
-                break;
-
-              case "status":
-                for (const id of [1, 2]) {
-                  const s = this.slots[id];
-                  const was = s.running;
-                  s.running = msg.slots[id]?.running ?? false;
-                  /* Reconnect: server masih running tapi UI belum punya countdown */
-                  if (s.running && !was && !s._timer && s.pendingAt) {
-                    if (new Date(s.pendingAt).getTime() > Date.now())
-                      this.startCountdown(id);
-                  }
-                }
+                this.handleServerSync(msg);
                 break;
 
               case "log":
@@ -1080,26 +1038,29 @@
           },
 
           /* ════════════════════════════════
-           Sync Handler (reconnect cache)
+           Server Sync (init / reconnect)
+           Menerima: status, cache, logs[], lastLogId
         ════════════════════════════════ */
-          handleSync(msg) {
+          handleServerSync(msg) {
+            const st = msg.status || {};
+            const cache = msg.cache || {};
+            const logs = msg.logs || [];
+            this.lastLogId = msg.lastLogId || 0;
+
+            /* restore slot state dari server */
             for (const id of [1, 2]) {
-              const c = msg.slots[id];
-              const st = msg.status?.[id];
-              if (!c) continue;
               const s = this.slots[id];
+              const c = cache[id];
+              const slotSt = st[id] || st.slots?.[id];
 
-              /* update running state dari status */
-              if (st) s.running = st.running ?? s.running;
+              if (slotSt) s.running = slotSt.running ?? s.running;
 
-              /* update cache dari server */
-              if (c.pendingAt) {
-                s.pendingAt = c.pendingAt;
+              if (c) {
+                if (c.pendingAt) s.pendingAt = c.pendingAt;
+                if (c.currentLevel != null) s.currentLevel = c.currentLevel;
+                if (c.targetLevel != null) s.targetLevel = c.targetLevel;
               }
-              if (c.currentLevel != null) s.currentLevel = c.currentLevel;
-              if (c.targetLevel != null) s.targetLevel = c.targetLevel;
 
-              /* restart countdown jika ada pendingAt valid */
               this.stopCountdown(id);
               if (s.pendingAt) {
                 const rem = new Date(s.pendingAt).getTime() - Date.now();
@@ -1107,13 +1068,32 @@
                 if (rem > 0 && s.running) this.startCountdown(id);
                 this.saveCooldown(id);
               } else {
-                s.time = "—";
+                s.time = "\u2014";
                 this.clearCooldown(id);
               }
             }
+
+            /* masukkan log cache (hanya yang belum ada di client) */
+            for (const log of logs) {
+              if (log._id > this.lastLogId) this.lastLogId = log._id;
+              if (!this.logs.some((l) => l._id === log._id)) {
+                this.logs.push(this.formatLogEntry(log));
+              }
+            }
+            if (this.logs.length > 600) this.logs = this.logs.slice(-450);
+            this.scrollLog();
           },
 
+          /* ════════════════════════════════
+           Log Processing (dedup via _id)
+        ════════════════════════════════ */
           processLog(msg) {
+            /* dedup: skip kalau _id sudah pernah dilihat */
+            if (msg._id != null) {
+              if (msg._id <= this.lastLogId) return;
+              this.lastLogId = msg._id;
+            }
+
             const s = this.slots[msg.slot];
 
             if (msg.logType === "success") {
@@ -1122,7 +1102,7 @@
                 (SKILL_UI[msg.skill] || msg.skill) +
                 "] Lv." +
                 msg.currentLevel +
-                " → Lv." +
+                " \u2192 Lv." +
                 msg.targetLevel;
               s.currentLevel = msg.currentLevel;
               s.targetLevel = msg.targetLevel;
@@ -1149,30 +1129,35 @@
               this.saveCooldown(msg.slot);
             }
 
-            this.logs.push({
-              _id: ++_logId,
-              time: this.ts(),
+            this.logs.push(this.formatLogEntry(msg));
+            if (this.logs.length > 600) this.logs = this.logs.slice(-450);
+            this.scrollLog();
+          },
+
+          formatLogEntry(msg) {
+            return {
+              _id: msg._id ?? 0,
+              time: msg.time || this.ts(),
               slot: msg.slot,
               logType: msg.logType,
               text: msg.text,
-            });
-            if (this.logs.length > 600) this.logs = this.logs.slice(-450);
-            this.scrollLog();
+            };
           },
 
           handleStopped(msg) {
             const s = this.slots[msg.slot];
             s.running = false;
             this.stopCountdown(msg.slot);
-            s.time = "—";
+            s.time = "\u2014";
             this.clearCooldown(msg.slot);
             this.logs.push({
-              _id: ++_logId,
+              _id: msg._id ?? 0,
               time: this.ts(),
               slot: msg.slot,
               logType: "stopped",
               text: msg.text,
             });
+            if (this.logs.length > 600) this.logs = this.logs.slice(-450);
             this.scrollLog();
           },
 

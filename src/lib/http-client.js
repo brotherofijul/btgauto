@@ -1,19 +1,21 @@
 import { gotScraping } from "got-scraping";
 import UserAgent from "user-agents";
 
-export async function postJson(url, body, token, signal) {
+const ua = new UserAgent({ deviceCategory: "mobile" });
+
+export function postJson(url, body, token, signal) {
   const opts = {
     url,
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
-      "User-Agent": new UserAgent({ deviceCategory: "mobile" }).toString(),
+      "User-Agent": ua.toString(),
       "Content-Type": "application/json",
       Accept: "application/json",
     },
     json: body,
     responseType: "json",
-    timeout: { request: 15000 },
+    timeout: { request: 15_000 },
     retry: { limit: 0 },
   };
 

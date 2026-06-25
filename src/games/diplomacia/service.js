@@ -1,5 +1,5 @@
-import { postJson } from "../../core/httpClient.js";
-import { sleepAbortable, randomJitter } from "../../utils/time.js";
+import { postJson } from "../../lib/http-client.js";
+import { sleepAbortable, randomJitter } from "../../lib/time.js";
 import {
   API_UPGRADE,
   ERROR_RETRY_DELAY_MS,
@@ -35,7 +35,6 @@ export async function runUpgradeLoop({ token, payload, signal, onLog }) {
         continue;
       }
 
-      /* ── Skill lain sedang di-upgrade, tunggu sampai selesai ── */
       if (data?.pending_at && data?.remaining_ms != null) {
         onLog({
           type: "retry",
@@ -49,7 +48,6 @@ export async function runUpgradeLoop({ token, payload, signal, onLog }) {
         continue;
       }
 
-      /* ── Respons tidak dikenali ── */
       onLog({ type: "warn", text: "Respons tidak sukses — retry 30 detik." });
       await sleepAbortable(ERROR_RETRY_DELAY_MS, signal);
     } catch (err) {
