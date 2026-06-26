@@ -3,9 +3,9 @@ const LS_TOKENS = "boiauto_tokens";
 const LS_COOLDOWN = "boiauto_cooldown";
 
 const SKILL_UI = {
-  kisla: "Barak",
-  savas_teknikleri: "Teknik Perang",
-  bilim_insani: "Ilmuan",
+  kisla: "Barrack",
+  savas_teknikleri: "War Technique",
+  bilim_insani: "Scientist",
 };
 
 const ICONS = {
@@ -73,9 +73,9 @@ function boiauto() {
     fSlot: "all",
     fType: "all",
     skills: [
-      { value: "1", label: "Barak" },
-      { value: "2", label: "Teknik Perang" },
-      { value: "3", label: "Ilmuan" },
+      { value: "1", label: "Barrack" },
+      { value: "2", label: "War Tech" },
+      { value: "3", label: "Scientist" },
     ],
 
     get filteredLogs() {
@@ -260,27 +260,8 @@ function boiauto() {
       const s = this.slots[msg.slot];
 
       if (msg.logType === "success") {
-        msg.text =
-          "[" +
-          (SKILL_UI[msg.skill] || msg.skill) +
-          "] Lv." +
-          msg.currentLevel +
-          " \u2192 Lv." +
-          msg.targetLevel;
         s.currentLevel = msg.currentLevel;
         s.targetLevel = msg.targetLevel;
-      } else if (msg.logType === "retry") {
-        msg.text =
-          "[" +
-          (SKILL_UI[msg.skill] || msg.skill) +
-          "] Sedang upgrade, menunggu...";
-      } else if (
-        msg.logType === "info" &&
-        msg.skill &&
-        msg.text.includes("dibatalkan")
-      ) {
-        msg.text =
-          "[" + (SKILL_UI[msg.skill] || msg.skill) + "] Upgrade dibatalkan.";
       }
 
       if (msg.pendingAt) {
@@ -301,7 +282,7 @@ function boiauto() {
         time: msg.time || this.ts(),
         slot: msg.slot,
         logType: msg.logType,
-        text: msg.text,
+        text: msg.text || "",
       };
     },
 
@@ -316,7 +297,7 @@ function boiauto() {
         time: this.ts(),
         slot: msg.slot,
         logType: "stopped",
-        text: msg.text,
+        text: msg.text || "Loop stopped.",
       });
       if (this.logs.length > 600) this.logs = this.logs.slice(-450);
       this.scrollLog();

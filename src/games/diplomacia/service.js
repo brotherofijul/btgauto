@@ -9,7 +9,7 @@ import {
 } from "./config.js";
 
 export async function runUpgradeLoop({ token, payload, signal, onLog }) {
-  onLog({ type: "info", text: "Loop dimulai." });
+  onLog({ type: "info", text: "Loop started." });
 
   while (!signal.aborted) {
     try {
@@ -49,17 +49,17 @@ export async function runUpgradeLoop({ token, payload, signal, onLog }) {
         continue;
       }
 
-      onLog({ type: "warn", text: "Respons tidak sukses — retry 30 detik." });
+      onLog({ type: "warn", text: "Unexpected response \u2014 retry in 30s." });
       await sleepAbortable(ERROR_RETRY_DELAY_MS, signal);
     } catch (err) {
       if (signal.aborted) break;
       onLog({
         type: "error",
-        text: `${err.name}: ${err.message} — retry 30 detik.`,
+        text: `${err.name}: ${err.message} \u2014 retry in 30s.`,
       });
       await sleepAbortable(ERROR_RETRY_DELAY_MS, signal);
     }
   }
 
-  onLog({ type: "info", text: "Loop selesai." });
+  onLog({ type: "info", text: "Loop ended." });
 }

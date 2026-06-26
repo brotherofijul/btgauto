@@ -8,10 +8,16 @@ import { fileURLToPath } from "url";
 import { resolveGameRunner } from "./lib/registry.js";
 import { resolveUpgradePayload } from "./games/diplomacia/validator.js";
 import { postJson } from "./lib/http-client.js";
-import { API_CANCEL } from "./games/diplomacia/config.js";
+import { API_UPGRADE, API_CANCEL } from "./games/diplomacia/config.js";
 
 const SLOT_COUNT = 2;
 const LOG_CACHE_MAX = 20;
+
+const SKILL_DISPLAY = {
+  kisla: "Barrack",
+  savas_teknikleri: "War Technique",
+  bilim_insani: "Scientist",
+};
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -21,6 +27,7 @@ function createSlot() {
     running: false,
     activeSkill: null,
     token: null,
+    payload: null,
     cache: { pendingAt: null, currentLevel: null, targetLevel: null, skill: null },
   };
 }
@@ -32,6 +39,23 @@ const slots = Object.fromEntries(
 const clients = new Set();
 let nextLogId = 0;
 const logCache = [];
+
+function buildLogText(event) {
+  const { logType, skill, text, currentLevel, targetLevel } = event;
+  if (logType === "success") {
+    const name = SKILL_DISPLAY[skill] || skill;
+    return `[${name}] Lv.${currentLevel} \u2192 Lv.${targetLevel}`;
+  }
+  if (logType === "retry") {
+    const name = SKILL_DISPLAY[skill] || skill;
+    return `[${name}] Upgrade pending, waiting...`;
+  }
+  if (logType === "info" && skill && text && text.includes("cancelled")) {
+    const name = SKILL_DISPLAY[skill] || skill;
+    return `[${name}] Upgrade cancelled.`;
+  }
+  return text || "";
+}
 
 function pushLogCache(entry) {
   entry._id = ++nextLogId;
@@ -63,13 +87,70 @@ function snapshotCache() {
   return out;
 }
 
-export function createApp() {
+async function verifySlotState(n) {
+  const slot = slots[n];
+  if (!slot.running || !slot.token || !slot.activeSkill || !slot.payload) return;
+
+  const log = (level, logType, text, extra = {}) => {
+    const entry = { type: "log", slot: n, logType, text, skill: slot.activeSkill, ...extra };
+    pushLogCache(entry);
+    broadcast(entry);
+  };
+
+  try {
+    const { body: data } = await postJson(
+      API_UPGRADE,
+      slot.payload,
+      slot.token,
+      AbortSignal.timeout(10000),
+    );
+
+    if (data?.success) {
+      slot.cache.pendingAt = data.pending_at || null;
+      slot.cache.currentLevel = data.current_level ?? slot.cache.currentLevel;
+      slot.cache.targetLevel = data.target_level ?? slot.cache.targetLevel;
+      slot.cache.skill = data.skill || slot.activeSkill;
+      log("info", "success", buildLogText({
+        logType: "success",
+        skill: data.skill || slot.activeSkill,
+        currentLevel: data.current_level,
+        targetLevel: data.target_level,
+      }));
+      return;
+    }
+
+    if (data?.pending_at && data?.remaining_ms != null) {
+      slot.cache.pendingAt = data.pending_at;
+      slot.cache.skill = data.active_skill || slot.activeSkill;
+      log("info", "retry", buildLogText({
+        logType: "retry",
+        skill: data.active_skill || slot.activeSkill,
+      }));
+      return;
+    }
+
+    log("warn", "warn", "Upgrade no longer active on game server. Stopping loop.");
+    slot.abortController.abort();
+  } catch (err) {
+    log("warn", "warn", `State verify failed: ${err.message}. Loop continues.`);
+  }
+}
+
+export function createApp(logger) {
   const app = Fastify({ logger: false });
   app.register(fastifyWebsocket);
 
   app.register(async function (fastify) {
     fastify.get("/ws", { websocket: true }, (socket) => {
       clients.add(socket);
+
+      logger.debug({ event: "ws_connect", clientCount: clients.size }, "WebSocket client connected");
+
+      (async () => {
+        for (let i = 1; i <= SLOT_COUNT; i++) {
+          if (slots[i].running) await verifySlotState(i);
+        }
+      })();
 
       socket.send(
         JSON.stringify({
@@ -89,7 +170,12 @@ export function createApp() {
           return;
         }
 
+        logger.debug({ action: msg.action, slot: msg.slot }, "WS message received");
+
         if (msg.action === "sync") {
+          for (let i = 1; i <= SLOT_COUNT; i++) {
+            if (slots[i].running) await verifySlotState(i);
+          }
           socket.send(
             JSON.stringify({
               type: "sync",
@@ -104,13 +190,13 @@ export function createApp() {
 
         const n = Number(msg.slot);
         if (n < 1 || n > SLOT_COUNT) {
-          return sendError(socket, n, "Slot tidak valid.");
+          return sendError(socket, n, "Invalid slot.");
         }
 
         if (msg.action === "start") {
-          handleStart(socket, n, msg);
+          handleStart(socket, n, msg, logger);
         } else if (msg.action === "stop") {
-          await handleStop(socket, n);
+          await handleStop(socket, n, logger);
         } else if (msg.action === "status") {
           socket.send(
             JSON.stringify({ type: "status", slots: snapshotStatus() }),
@@ -118,7 +204,10 @@ export function createApp() {
         }
       });
 
-      socket.on("close", () => clients.delete(socket));
+      socket.on("close", () => {
+        clients.delete(socket);
+        logger.debug({ clientCount: clients.size }, "WebSocket client disconnected");
+      });
     });
   });
 
@@ -130,20 +219,20 @@ export function createApp() {
   return app;
 }
 
-function handleStart(socket, n, msg) {
+function handleStart(socket, n, msg, logger) {
   const slot = slots[n];
   if (slot.running) {
-    return sendError(socket, n, "Loop sudah berjalan.");
+    return sendError(socket, n, "Loop already running.");
   }
 
   const { game, authorization, skill = "3", pay = "1" } = msg;
   if (!game || !authorization) {
-    return sendError(socket, n, "Field 'game' dan 'authorization' wajib diisi.");
+    return sendError(socket, n, "Fields 'game' and 'authorization' are required.");
   }
 
   const runner = resolveGameRunner(game.toLowerCase());
   if (!runner) {
-    return sendError(socket, n, `Game '${game}' tidak didukung.`);
+    return sendError(socket, n, `Game '${game}' not supported.`);
   }
 
   let payload;
@@ -157,7 +246,10 @@ function handleStart(socket, n, msg) {
   slot.running = true;
   slot.activeSkill = payload.skill;
   slot.token = authorization;
+  slot.payload = payload;
   broadcast({ type: "status", slots: snapshotStatus() });
+
+  logger.info({ slot: n, skill: payload.skill, pay: payload.type }, "Upgrade loop started");
 
   const onLog = (event) => {
     const { type: logType, skill: evSkill, ...rest } = event;
@@ -168,7 +260,8 @@ function handleStart(socket, n, msg) {
     if (rest.targetLevel != null) slot.cache.targetLevel = rest.targetLevel;
     if (evSkill) slot.cache.skill = evSkill;
 
-    const entry = { type: "log", slot: n, logType, skill: evSkill, ...rest };
+    const text = buildLogText({ logType, skill: evSkill, ...rest });
+    const entry = { type: "log", slot: n, logType, skill: evSkill, text, ...rest };
     pushLogCache(entry);
     broadcast(entry);
   };
@@ -183,16 +276,18 @@ function handleStart(socket, n, msg) {
     slot.running = false;
     slot.activeSkill = null;
     slot.token = null;
+    slot.payload = null;
     slot.cache = { pendingAt: null, currentLevel: null, targetLevel: null, skill: null };
-    broadcast({ type: "stopped", slot: n, text: "Loop dihentikan." });
+    broadcast({ type: "stopped", slot: n, text: "Loop stopped." });
     broadcast({ type: "status", slots: snapshotStatus() });
+    logger.info({ slot: n }, "Upgrade loop stopped");
   });
 }
 
-async function handleStop(socket, n) {
+async function handleStop(socket, n, logger) {
   const slot = slots[n];
   if (!slot.running) {
-    return sendError(socket, n, "Loop tidak sedang berjalan.");
+    return sendError(socket, n, "Loop is not running.");
   }
 
   if (slot.activeSkill && slot.token) {
@@ -206,24 +301,31 @@ async function handleStop(socket, n) {
       );
 
       if (res?.success) {
+        const text = buildLogText({
+          logType: "info",
+          skill: res.skill,
+          text: `Upgrade ${res.skill} cancelled.`,
+        });
         const entry = {
           type: "log",
           slot: n,
           logType: "info",
           skill: res.skill,
-          text: `Upgrade ${res.skill} dibatalkan.`,
+          text,
         };
         pushLogCache(entry);
         broadcast(entry);
+        logger.info({ slot: n, skill: res.skill }, "Upgrade cancelled on game server");
       } else {
         const entry = {
           type: "log",
           slot: n,
           logType: "warn",
-          text: "Gagal membatalkan upgrade di server.",
+          text: "Failed to cancel upgrade on game server.",
         };
         pushLogCache(entry);
         broadcast(entry);
+        logger.warn({ slot: n }, "Failed to cancel upgrade on game server");
       }
     } catch (err) {
       const entry = {
@@ -234,6 +336,7 @@ async function handleStop(socket, n) {
       };
       pushLogCache(entry);
       broadcast(entry);
+      logger.warn({ slot: n, err: err.message }, "Cancel request failed");
     }
   }
 
