@@ -1,22 +1,4 @@
 // src/views/style.css
-@theme {
-  --font-display: "Space Grotesk", sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
-  --color-base-950: #0a0e0d;
-  --color-base-900: #111916;
-  --color-base-800: #1a2420;
-  --color-base-700: #243430;
-  --color-base-600: #2e443d;
-  --color-base-400: #5a7a6e;
-  --color-base-200: #a3c4b5;
-  --color-base-100: #d0e8dc;
-  --color-s1: #00e88f;
-  --color-s1-dim: #00c278;
-  --color-s2: #00c8ff;
-  --color-s2-dim: #00a8d6;
-  --color-warn: #f5a623;
-  --color-danger: #ff4d6a;
-}
 
 *,
 *::before,
